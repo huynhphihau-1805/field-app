@@ -13,7 +13,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showDialog
 import com.crayon.fieldapp.utils.showMessageDialog
-import kotlinx.android.synthetic.main.fragment_forgot.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ForgotPasswordFragment : BaseFragment<FragmentForgotBinding, ForgotPasswordViewModel>() {
@@ -25,19 +24,14 @@ class ForgotPasswordFragment : BaseFragment<FragmentForgotBinding, ForgotPasswor
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        bn_reset.setSingleClick {
-            val email = edt_phone.text.toString()
-            if (email.isNullOrBlank()) {
+        binding.bnReset.setSingleClick {
+            val email = binding.edtPhone.text.toString()
+            if (email.isBlank()) {
                 context?.showMessageDialog(message = "Vui lòng nhập số điện thoại của bạn") { }
             } else {
                 viewModel.resetPassword(email)
             }
-
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         viewModel.isForgotPasswordSuccess.observe(viewLifecycleOwner, Observer {
             when (it.status) {
@@ -52,8 +46,8 @@ class ForgotPasswordFragment : BaseFragment<FragmentForgotBinding, ForgotPasswor
                         positiveListener = {
                             val bundel = bundleOf(
                                 "mode" to VerifyOtpFragment.VERIFY_RESET_PASSWORD_MODE,
-                                "phone" to edt_phone.text.toString(),
-                                "password" to edt_phone.text.toString()
+                                "phone" to binding.edtPhone.text.toString(),
+                                "password" to binding.edtPhone.text.toString()
                             )
                             findNavController().navigate(
                                 R.id.action_forgotPasswordFragment_to_verify,

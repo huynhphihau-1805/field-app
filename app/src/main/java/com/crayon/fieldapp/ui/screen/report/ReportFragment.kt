@@ -12,7 +12,6 @@ import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.report.project.ReportByProjectFragment
 import com.crayon.fieldapp.ui.screen.report.time.ReportByTimeFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_report.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ReportFragment : BaseFragment<FragmentReportBinding, ReportViewModel>() {
@@ -31,12 +30,7 @@ class ReportFragment : BaseFragment<FragmentReportBinding, ReportViewModel>() {
         viewPager = view.findViewById(R.id.vp_timekeeping)
 
         setupViewPager()
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

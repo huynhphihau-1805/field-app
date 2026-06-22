@@ -14,7 +14,6 @@ import com.crayon.fieldapp.ui.screen.report.adapter.TodayShiftRVAdapter
 import com.crayon.fieldapp.ui.widgets.MtsCalendarView
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_report_time.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import studio.phillip.yolo.utils.TimeFormatUtils
 import java.text.SimpleDateFormat
@@ -43,17 +42,17 @@ class ReportByTimeFragment :
         var summaryShiftAdapter = SimpleRVAdapter(arrayListOf(), requireContext())
         var todayShiftadapter = TodayShiftRVAdapter(arrayListOf(), true, requireContext())
 
-        rv_today_shift.setLayoutManager(LinearLayoutManager(requireContext()))
-        rv_today_shift.adapter = todayShiftadapter
+        binding.rvTodayShift.setLayoutManager(LinearLayoutManager(requireContext()))
+        binding.rvTodayShift.adapter = todayShiftadapter
 
-        rv_project.setLayoutManager(LinearLayoutManager(requireContext()))
-        rv_project.adapter = projectAdapter
+        binding.rvProject.setLayoutManager(LinearLayoutManager(requireContext()))
+        binding.rvProject.adapter = projectAdapter
 
-        rv_summary_shift.setLayoutManager(LinearLayoutManager(requireContext()))
-        rv_summary_shift.adapter = summaryShiftAdapter
+        binding.rvSummaryShift.setLayoutManager(LinearLayoutManager(requireContext()))
+        binding.rvSummaryShift.adapter = summaryShiftAdapter
 
 
-        calendar_view?.setEventHandler(object : MtsCalendarView.EventHandler {
+        binding.calendarView.setEventHandler(object : MtsCalendarView.EventHandler {
             override fun onMonthPress(cal: Calendar) {
                 calendar = cal
                 viewModel.getReportByTime(cal)
@@ -69,13 +68,13 @@ class ReportByTimeFragment :
                             temp.addAll(arrTask)
                             todayShiftadapter.addAll(temp)
 
-                            txt_select_date.visibility = View.VISIBLE
-                            txt_select_date.text = resources.getString(
+                            binding.txtSelectDate.visibility = View.VISIBLE
+                            binding.txtSelectDate.text = resources.getString(
                                 R.string.txt_timekeeping_date,
                                 date.toTimeString("dd/MM/yyyy"), arrTask?.size ?: 0
                             )
                         } else {
-                            txt_select_date.visibility = View.GONE
+                            binding.txtSelectDate.visibility = View.GONE
                             todayShiftadapter.clear()
                         }
                     }
@@ -99,10 +98,10 @@ class ReportByTimeFragment :
             listTask.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { tasks ->
                             // Get summary
                             val numberOfMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -120,42 +119,42 @@ class ReportByTimeFragment :
                                 23,
                                 59
                             )!!.toTimeString("dd/MM/yyyy")
-                            txt_summary_date.text =
+                            binding.txtSummaryDate.text =
                                 "Thông kê từ ngày " + start_date + " đến ngày " + end_date
 
 
                             // Get invalid shift
                             val invalidShift =
                                 viewModel.calculateTotalInvalidShift(tasks as ArrayList<TaskResponse>)
-                            txt_summary_invalid_shift.text =
+                            binding.txtSummaryInvalidShift.text =
                                 getString(R.string.txt_summary_invalid_shift, invalidShift)
 
                             // Get project
                             val projects = viewModel.getProjectOfReport(tasks)
-                            txt_summary_project.text = "Số dự án: " + projects.size
+                            binding.txtSummaryProject.text = "Số dự án: " + projects.size
                             projectAdapter.addAll(projects)
 
                             // Get total man Hour
                             val manHour = viewModel.calculateTotalManHour(tasks)
-                            txt_summary_hour.text = getString(
+                            binding.txtSummaryHour.text = getString(
                                 R.string.txt_summary_hour,
                                 TimeFormatUtils.convertSecondToHour(manHour)
                             )
 
                             // Get map of month
                             val map = viewModel.calculateMapOfMonth(tasks)
-                            calendar_view.updateCalendar(map)
+                            binding.calendarView.updateCalendar(map)
                             selectShift = map
 
                             // Get summary shift
                             val summaryShift = viewModel.calculateShift(tasks)
                             summaryShiftAdapter.addAll(summaryShift)
-                            txt_summary_shift.text = "Tổng số ca làm: " + tasks.size
+                            binding.txtSummaryShift.text = "Tổng số ca làm: " + tasks.size
 
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })

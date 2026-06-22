@@ -8,8 +8,6 @@ import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.SimpleModel
 import com.crayon.fieldapp.data.remote.response.TaskResponse
@@ -21,12 +19,13 @@ import com.crayon.fieldapp.ui.screen.report.adapter.TodayShiftRVAdapter
 import com.crayon.fieldapp.ui.widgets.MtsCalendarView
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_report_project.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import studio.phillip.yolo.utils.TimeFormatUtils
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Calendar
+import java.util.Date
 
 class ReportByProjectFragment :
     BaseFragment<FragmentReportProjectBinding, ReportProjectViewModel>() {
@@ -59,29 +58,29 @@ class ReportByProjectFragment :
                     data.add(SimpleModel(it.name, it.id))
                 }
                 selectProjectAdapter.addItems(data)
-                sp_project.adapter = selectProjectAdapter
+                binding.spProject.adapter = selectProjectAdapter
 
             })
 
         var summaryShiftAdapter = SimpleRVAdapter(arrayListOf(), requireContext())
         var todayShiftadapter = TodayShiftRVAdapter(arrayListOf(), false, requireContext())
 
-        rv_today_shift.setLayoutManager(LinearLayoutManager(requireContext()))
-        rv_today_shift.adapter = todayShiftadapter
+        binding.rvTodayShift.setLayoutManager(LinearLayoutManager(requireContext()))
+        binding.rvTodayShift.adapter = todayShiftadapter
 
-        rv_summary_shift.setLayoutManager(LinearLayoutManager(requireContext()))
-        rv_summary_shift.adapter = summaryShiftAdapter
+        binding.rvSummaryShift.setLayoutManager(LinearLayoutManager(requireContext()))
+        binding.rvSummaryShift.adapter = summaryShiftAdapter
 
         viewModel.setValue()
-        btn_load_more?.setOnClickListener {
+        binding.btnLoadMore.setOnClickListener {
             viewModel.projects.removeObservers(viewLifecycleOwner)
             findNavController().navigate(R.id.action_report_to_loginFragment)
         }
 
         selectProjectAdapter = SimpleSPAdapter(requireContext(), arrayListOf())
-        sp_project?.adapter = selectProjectAdapter
+        binding.spProject.adapter = selectProjectAdapter
 
-        sp_project?.onItemSelectedListener = object :
+        binding.spProject.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -103,7 +102,7 @@ class ReportByProjectFragment :
             }
         }
 
-        calendar_view?.setEventHandler(object : MtsCalendarView.EventHandler {
+        binding.calendarView?.setEventHandler(object : MtsCalendarView.EventHandler {
             override fun onMonthPress(cal: Calendar) {
                 calendar = cal
                 viewModel.getReportByProject(cal)
@@ -119,13 +118,13 @@ class ReportByProjectFragment :
                             temp.addAll(arrTask)
                             todayShiftadapter.addAll(temp)
 
-                            txt_select_date.visibility = View.VISIBLE
-                            txt_select_date.text = resources.getString(
+                            binding.txtSelectDate.visibility = View.VISIBLE
+                            binding.txtSelectDate.text = resources.getString(
                                 R.string.txt_timekeeping_date,
                                 date.toTimeString("dd/MM/yyyy"), arrTask?.size ?: 0
                             )
                         } else {
-                            txt_select_date.visibility = View.GONE
+                            binding.txtSelectDate.visibility = View.GONE
                             todayShiftadapter.clear()
                         }
                     }
@@ -149,12 +148,13 @@ class ReportByProjectFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
                         if (isFistTime) {
                             isFistTime = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                             listAllProject = it.data?.map {
                                 SimpleModel(
                                     id = it.id.toString(),
@@ -171,8 +171,9 @@ class ReportByProjectFragment :
                             selectProjectAdapter.addItems(data)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -182,10 +183,11 @@ class ReportByProjectFragment :
         viewModel.listTask.observe(viewLifecycleOwner, Observer {
             when (it.status) {
                 Status.LOADING -> {
-                    pb_loading.visibility = View.VISIBLE
+                    binding.pbLoading.visibility = View.VISIBLE
                 }
+
                 Status.SUCCESS -> {
-                    pb_loading.visibility = View.GONE
+                    binding.pbLoading.visibility = View.GONE
                     var tasks = ArrayList<TaskResponse>()
                     if (selectProjectIds.size == 1 && selectProjectIds.get(0).equals("all")) {
                         tasks = it.data!! as ArrayList<TaskResponse>
@@ -211,36 +213,40 @@ class ReportByProjectFragment :
                         23,
                         59
                     )!!.toTimeString("dd/MM/yyyy")
-                    txt_summary_date.text =
+                    binding.txtSummaryDate.text =
                         "Thông kê từ ngày " + start_date + " đến ngày " + end_date
 
 
                     // Get invalid shift
                     val invalidShift =
                         viewModel.calculateTotalInvalidShift(tasks as ArrayList<TaskResponse>)
-                    txt_summary_invalid_shift.text =
+                    binding.txtSummaryInvalidShift.text =
                         getString(R.string.txt_summary_invalid_shift, invalidShift)
 
                     // Get total man Hour
                     val manHour = viewModel.calculateTotalManHour(tasks)
-                    Log.d("AAA-project : " ,  TimeFormatUtils.convertSecondToHour(manHour) + "/" + "man:" + manHour)
-                    txt_summary_hour.text = getString(
+                    Log.d(
+                        "AAA-project : ",
+                        TimeFormatUtils.convertSecondToHour(manHour) + "/" + "man:" + manHour
+                    )
+                    binding.txtSummaryHour.text = getString(
                         R.string.txt_summary_hour,
                         TimeFormatUtils.convertSecondToHour(manHour)
                     )
 
                     // Get map of month
                     val map = viewModel.calculateMapOfMonth(tasks)
-                    calendar_view.updateCalendar(map)
+                    binding.calendarView.updateCalendar(map)
                     selectShift = map
 
                     // Get summary shift
                     val summaryShift = viewModel.calculateShift(tasks)
                     summaryShiftAdapter.addAll(summaryShift)
-                    txt_summary_shift.text = "Tổng số ca làm: " + tasks.size
+                    binding.txtSummaryShift.text = "Tổng số ca làm: " + tasks.size
                 }
+
                 Status.ERROR -> {
-                    pb_loading.visibility = View.GONE
+                    binding.pbLoading.visibility = View.GONE
                 }
             }
         })

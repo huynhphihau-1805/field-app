@@ -9,8 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.crayon.fieldapp.R
 
 class SimpleRVAdapter constructor(
-        val items: ArrayList<String>,
-        val context: Context
+    val items: ArrayList<String>,
+    val context: Context
 ) : RecyclerView.Adapter<SimpleRVAdapter.StoreViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StoreViewHolder {

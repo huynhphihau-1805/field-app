@@ -5,7 +5,7 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentContactBinding
+import com.crayon.fieldapp.databinding.FragmentAddCustomerBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.ChangeGiftViewModel
@@ -14,11 +14,9 @@ import com.crayon.fieldapp.ui.screen.detailTask.changeGift.step2.VerifyOtpStep2F
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.step3.InputBillFragment
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.step4.SelectPromotionFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_add_customer.*
-import kotlinx.android.synthetic.main.fragment_contact.imb_ic_back
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewModel>() {
+class AddCustomerFragment : BaseFragment<FragmentAddCustomerBinding, ChangeGiftViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_add_customer
     override val viewModel: ChangeGiftViewModel by viewModel()
@@ -53,15 +51,15 @@ class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewM
         super.onViewCreated(view, savedInstanceState)
         setupViewPager()
         if (_isVerifyOtp) {
-            stepper_indicator?.setViewPager(pagger, 4)
-            stepper_indicator.setLabels(resources.getStringArray(R.array.stepLabels))
+            binding.stepperIndicator.setViewPager(binding.pagger, 4)
+            binding.stepperIndicator.setLabels(resources.getStringArray(R.array.stepLabels))
         } else {
-            stepper_indicator?.setViewPager(pagger, 3)
-            stepper_indicator.setLabels(resources.getStringArray(R.array.stepLabelsWithoutOTP))
+            binding.stepperIndicator.setViewPager(binding.pagger, 3)
+            binding.stepperIndicator.setLabels(resources.getStringArray(R.array.stepLabelsWithoutOTP))
         }
         setupTablayout()
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -72,7 +70,7 @@ class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewM
         _inputNameFragment = InputNameFragment({ customer ->
             _customerId = customer.id.toString()
             _customerPhone = customer.mobileNumber.toString()
-            pagger.setCurrentItem(1, true)
+            binding.pagger.setCurrentItem(1, true)
 //            stepper_indicator?.currentStep = 1
             _verifyOtpFragment?.setCustomerPhone(_customerPhone.toString())
             _inputBillFragment?.setCustomerId(_customerId.toString())
@@ -80,7 +78,7 @@ class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewM
         _inputNameFragment?.arguments = bundleOf("taskId" to _taskId)
 
         _verifyOtpFragment = VerifyOtpStep2Fragment({ ->
-            pagger.setCurrentItem(2, true)
+            binding.pagger.setCurrentItem(2, true)
         })
         _verifyOtpFragment?.arguments = bundleOf(
             "taskId" to _taskId
@@ -88,9 +86,9 @@ class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewM
         _inputBillFragment = InputBillFragment({
             _billId = it.id
             if (_isVerifyOtp) {
-                pagger.setCurrentItem(3, true)
+                binding.pagger.setCurrentItem(3, true)
             } else {
-                pagger.setCurrentItem(2, true)
+                binding.pagger.setCurrentItem(2, true)
             }
             _selectPromotionFragment?.setBillId(_billId.toString())
 
@@ -112,15 +110,15 @@ class AddCustomerFragment : BaseFragment<FragmentContactBinding, ChangeGiftViewM
         mViewPagerAdapter.addFragment(_inputBillFragment!!, "")
         mViewPagerAdapter.addFragment(_selectPromotionFragment!!, "")
 
-        pagger.apply {
+        binding.pagger.apply {
             offscreenPageLimit = 1
             adapter = mViewPagerAdapter
         }
     }
 
     private fun setupTablayout() {
-        stepper_indicator?.addOnStepClickListener {
-            pagger.setCurrentItem(it, true)
+        binding.stepperIndicator.addOnStepClickListener {
+            binding.pagger.setCurrentItem(it, true)
         }
     }
 }

@@ -6,7 +6,6 @@ import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentRequireLoginBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
-import kotlinx.android.synthetic.main.fragment_require_login.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class RequireLoginFragment : BaseFragment<FragmentRequireLoginBinding, RequireLoginViewModel>() {
@@ -22,11 +21,11 @@ class RequireLoginFragment : BaseFragment<FragmentRequireLoginBinding, RequireLo
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        bn_register.setOnClickListener {
+        binding.bnRegister.setOnClickListener {
             findNavController().navigate(R.id.to_register)
         }
 
-        bn_login.setOnClickListener {
+        binding.bnLogin.setOnClickListener {
             findNavController().navigate(R.id.to_login)
         }
     }

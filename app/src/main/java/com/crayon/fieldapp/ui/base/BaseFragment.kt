@@ -1,6 +1,7 @@
 package com.crayon.fieldapp.ui.base
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,25 +10,22 @@ import androidx.appcompat.app.AlertDialog
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
-import com.crayon.fieldapp.BR
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.local.pref.PrefHelper
+import com.crayon.fieldapp.databinding.DialogEditQuantityBinding
 import com.crayon.fieldapp.utils.DialogHandler
 import com.crayon.fieldapp.utils.Utils
 import com.crayon.fieldapp.utils.showLoadingDialog
 import org.koin.android.ext.android.inject
 
 
-abstract class BaseFragment<ViewBinding : ViewDataBinding, ViewModel : BaseViewModel> : Fragment() {
+abstract class BaseFragment<VB : ViewDataBinding, VM : BaseViewModel> : Fragment() {
+    private var _binding: VB? = null
+    protected val binding get() = _binding!!
 
-    protected lateinit var viewBinding: ViewBinding
-
-    protected abstract val viewModel: ViewModel
-
+    protected abstract val viewModel: VM
     val appPrefs: PrefHelper by inject()
-
 
     @get:LayoutRes
     protected abstract val layoutId: Int
@@ -35,83 +33,67 @@ abstract class BaseFragment<ViewBinding : ViewDataBinding, ViewModel : BaseViewM
     private var loadingDialog: AlertDialog? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        if (::viewBinding.isInitialized.not()) {
-            viewBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
-            viewBinding.apply {
-                setVariable(BR.viewModel, viewModel)
-                root.isClickable = true
-                lifecycleOwner = viewLifecycleOwner
-                executePendingBindings()
+        _binding = DataBindingUtil.inflate(inflater, layoutId, container, false)
+        binding.lifecycleOwner = viewLifecycleOwner
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupObservers()
+    }
+
+    private fun setupObservers() {
+        viewModel.apply {
+            isLoading.observe(viewLifecycleOwner) { handleLoading(it == true) }
+            errorMessage.observe(viewLifecycleOwner) { handleErrorMessage(it) }
+            noInternetConnectionEvent.observe(viewLifecycleOwner) {
+                handleErrorMessage(getString(R.string.no_internet_connection))
+            }
+            tokenExpiredEvent.observe(viewLifecycleOwner) {
+                appPrefs.clear()
+                navigateToLogin()
+            }
+            connectTimeoutEvent.observe(viewLifecycleOwner) {
+                handleErrorMessage(getString(R.string.connect_timeout))
             }
         }
-        return viewBinding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        viewModel.apply {
-            isLoading.observe(viewLifecycleOwner, Observer {
-                handleLoading(it == true)
-            })
-            errorMessage.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(it)
-            })
-            noInternetConnectionEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.no_internet_connection))
-            })
-            tokenExpiredEvent.observe(viewLifecycleOwner, Observer {
-                appPrefs.clear()
-                findNavController().navigate(R.id.action_global_loginFragment)
-            })
-            connectTimeoutEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.connect_timeout))
-            })
-            forceUpdateAppEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.force_update_app))
-            })
-            serverMaintainEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.server_maintain_message))
-            })
-        }
+    private fun navigateToLogin() {
+        findNavController().navigate(R.id.action_global_loginFragment)
     }
 
-    /**
-     * override this if not use loading dialog (example progress bar)
-     */
     open fun handleLoading(isLoading: Boolean) {
-        if (isLoading) showLoadingDialog() else dismissLLoadingDialog()
+        if (isLoading) showLoadingDialog() else dismissLoadingDialog()
     }
 
     fun showLoadingDialog() {
         if (loadingDialog == null) {
             loadingDialog = context?.showLoadingDialog()
-        } else {
-            loadingDialog?.show()
         }
+        loadingDialog?.show()
     }
 
-    fun dismissLLoadingDialog() {
+    fun dismissLoadingDialog() {
         if (loadingDialog?.isShowing == true) {
             loadingDialog?.dismiss()
         }
     }
 
     fun handleErrorMessage(message: String?) {
-        dismissLLoadingDialog()
-        DialogHandler.showMessageDialog(requireContext(), message = message.toString(), callback = {
-
-        })
+        dismissLoadingDialog()
+        DialogHandler.showMessageDialog(requireContext(), message.orEmpty())
     }
 
-
-    override fun onDestroy() {
+    override fun onDestroyView() {
+        super.onDestroyView()
         loadingDialog?.dismiss()
+        _binding = null
         DialogHandler.dismissMessageDialog()
-        super.onDestroy()
     }
 
     override fun onStop() {

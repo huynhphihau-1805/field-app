@@ -7,16 +7,15 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentSelectProjectBinding
+import com.crayon.fieldapp.databinding.FragmentStoreProjectBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailProject.addStore.adapter.AddStoreRVAdapter
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showDialog
-import kotlinx.android.synthetic.main.fragment_store_project.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class StoreProjectFragment : BaseFragment<FragmentSelectProjectBinding, StoreProjectViewModel>() {
+class StoreProjectFragment : BaseFragment<FragmentStoreProjectBinding, StoreProjectViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_store_project
 
@@ -35,11 +34,11 @@ class StoreProjectFragment : BaseFragment<FragmentSelectProjectBinding, StorePro
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_choose?.setSingleClick {
+        binding.btnChoose.setSingleClick {
             adapterStores?.let {
                 viewModel.addStoreToProject(
                     agencyId,
@@ -49,15 +48,9 @@ class StoreProjectFragment : BaseFragment<FragmentSelectProjectBinding, StorePro
             }
         }
 
-        cb_select_all?.setOnCheckedChangeListener { compoundButton, isChecked ->
+        binding.cbSelectAll.setOnCheckedChangeListener { compoundButton, isChecked ->
             adapterStores?.selectAllItems(isChecked)
         }
-
-
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         adapterStores = AddStoreRVAdapter(
             arrayListOf(),
@@ -65,7 +58,7 @@ class StoreProjectFragment : BaseFragment<FragmentSelectProjectBinding, StorePro
             itemClickListener = { toStoreDetail(it.id) }
         )
 
-        rv_stores.apply {
+        binding.rvStores.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterStores
         }
@@ -76,16 +69,18 @@ class StoreProjectFragment : BaseFragment<FragmentSelectProjectBinding, StorePro
             myStores.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapterStores?.addStore(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })

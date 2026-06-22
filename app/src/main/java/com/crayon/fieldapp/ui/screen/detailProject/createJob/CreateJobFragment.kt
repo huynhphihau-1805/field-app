@@ -16,9 +16,9 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showDialog
 import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_create_job.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewModel>() {
 
@@ -49,19 +49,19 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        txt_start_date?.setSingleClick {
+        binding.txtStartDate.setSingleClick {
             selectTime(true)
         }
 
-        txt_end_date?.setSingleClick {
+        binding.txtEndDate.setSingleClick {
             selectTime(false)
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val pic = apdaterMember?.getSelectedMembers()
             val form = CreateJobForm(
                 agencyId = agencyId,
@@ -70,7 +70,7 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
                 shift_end = end_date,
                 storeId = storeId,
                 picId = pic,
-                role = sp_role?.selectedItem.toString()
+                role = binding.spRole.selectedItem.toString()
             )
             form.validate().also { result ->
                 if (result.first) {
@@ -80,12 +80,8 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
                 }
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = apdaterMember
         }
@@ -97,16 +93,18 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
             members.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             apdaterMember?.addAll(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -116,6 +114,7 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         requireContext().showDialog(
@@ -126,13 +125,13 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
                             }
                         )
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
                 }
             })
         }
-
     }
 
     private fun selectTime(isStartTime: Boolean) {
@@ -160,14 +159,14 @@ class CreateJobFragment : BaseFragment<FragmentCreateJobBinding, CreateJobViewMo
                             start_date =
                                 time.toTimeString("yyyy-MM-dd'T'HH:mm:ss Z", Locale.getDefault())
                             start_date?.let {
-                                txt_start_date.text =
+                                binding.txtStartDate.text =
                                     time.toTimeString("dd/MM/yyyy HH:mm", Locale.getDefault())
                             }
                         } else {
                             end_date =
                                 time.toTimeString("yyyy-MM-dd'T'HH:mm:ss Z", Locale.getDefault())
                             end_date?.let {
-                                txt_end_date.text =
+                                binding.txtEndDate.text =
                                     time.toTimeString("dd/MM/yyyy HH:mm", Locale.getDefault())
                             }
                         }

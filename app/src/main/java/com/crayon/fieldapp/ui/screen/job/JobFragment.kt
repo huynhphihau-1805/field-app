@@ -13,7 +13,6 @@ import com.crayon.fieldapp.ui.screen.job.listJob.ListJobFragment
 import com.crayon.fieldapp.ui.screen.job.request.ListJobRequestFragment
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.fragment_job.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class JobFragment : BaseFragment<FragmentJobBinding, JobViewModel>() {
@@ -32,15 +31,11 @@ class JobFragment : BaseFragment<FragmentJobBinding, JobViewModel>() {
         viewPager = view.findViewById(R.id.vp_jobs)
 
         setupViewPager()
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
+
 
     private fun setupViewPager() {
         mAdapter = BaseVPAdapter(childFragmentManager)

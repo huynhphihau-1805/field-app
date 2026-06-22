@@ -5,7 +5,6 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
-import com.google.android.material.tabs.TabLayout
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.ProjectStatus
 import com.crayon.fieldapp.databinding.FragmentManageProjectBinding
@@ -13,7 +12,7 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.listProject.ListProjectFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_report.*
+import com.google.android.material.tabs.TabLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageProjectFragment :
@@ -41,12 +40,8 @@ class ManageProjectFragment :
         viewPager = view.findViewById(R.id.vp_project)
 
         setupViewPager()
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

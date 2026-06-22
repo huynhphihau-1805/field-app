@@ -21,10 +21,8 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.getCurrentDateTime
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_home.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.Serializable
-import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
@@ -52,18 +50,18 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
         )
         viewModel.getListRole()
         viewModel.deleteProduct()
-        refresh()
     }
 
     override fun onResume() {
         super.onResume()
+        refresh()
         jobAdapter?.notifyDataSetChanged()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Log.d("HAUHAUA", "onViewCreated")
         super.onViewCreated(view, savedInstanceState)
-        recycler_view.apply {
+        binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = jobAdapter
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -86,27 +84,27 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
             })
         }
 
-        btn_report?.setSingleClick {
+        binding.btnReport.setSingleClick {
             findNavController().navigate(R.id.to_report)
         }
 
-        btn_calendar?.setSingleClick {
+        binding.btnCalendar.setSingleClick {
             findNavController().navigate(R.id.to_calendar)
         }
 
-        btn_job?.setSingleClick {
+        binding.btnJob.setSingleClick {
             findNavController().navigate(R.id.main_to_list_job)
         }
 
-        btn_monitoring?.setSingleClick {
+        binding.btnMonitoring.setSingleClick {
             findNavController().navigate(R.id.action_monitor)
         }
 
-        refresh_layout?.setOnRefreshListener {
-            refresh_layout?.isRefreshing = false
+        binding.refreshLayout.setOnRefreshListener {
+            binding.refreshLayout.isRefreshing = false
             refresh()
         }
-        btn_filter_store?.setOnClickListener {
+        binding.btnFilterStore.setOnClickListener {
             jobs.let {
                 val storeDialog = FilterStoreDialog({ listStoreIds ->
                     filterStoreIds = listStoreIds
@@ -117,12 +115,12 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                             }
                             jobAdapter?.clearAll()
                             jobAdapter?.addAll(filter as ArrayList<JobResponse>)
-                            txt_filter_store_status?.visibility = View.VISIBLE
+                            binding.txtFilterStoreStatus.visibility = View.VISIBLE
                         }
                     } else {
                         jobs.let {
                             jobAdapter?.addAll(it)
-                            txt_filter_store_status?.visibility = View.GONE
+                            binding.txtFilterStoreStatus.visibility = View.GONE
                         }
                     }
                 }, {
@@ -131,7 +129,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                     jobAdapter?.clearAll()
                     jobs.let {
                         jobAdapter?.addAll(it)
-                        txt_filter_store_status?.visibility = View.GONE
+                        binding.txtFilterStoreStatus.visibility = View.GONE
                     }
                 })
                 val bundle = Bundle()
@@ -158,23 +156,20 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                 storeDialog.show(childFragmentManager, storeDialog.tag)
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        Log.d("HAUHAUA", "onActivityCreated")
-        super.onActivityCreated(savedInstanceState)
         viewModel.jobs.observe(viewLifecycleOwner, Observer {
             it.getContentIfNotHandled()?.let {
                 Log.d("HAUHAUA", "getContentIfNotHandled")
                 when (it.status) {
                     Status.LOADING -> {
                         Log.d("HAUHAUA", "LOADING")
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
                         Log.d("HAUHAUA", "SUCCESS")
                         isLoading = false
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             if (it.size == 0) {
                                 isEndList = true
@@ -185,25 +180,32 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                             }
                         }
                     }
+
                     Status.ERROR -> {
                         isLoading = false
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
 
+        viewModel.isShowMonitorTab.observe(viewLifecycleOwner, { isShow ->
+            if (isShow) {
+                binding.btnMonitoring.visibility = View.VISIBLE
+            } else {
+                binding.btnMonitoring.visibility = View.GONE
+            }
+        })
+
         viewModel.listAgency.observe(viewLifecycleOwner, Observer {
-            Log.d("BBBAAA-listAgency", it.toString())
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        Log.d("BBBAAA-listAgency", "LOADING")
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        Log.d("BBBAAA-listAgency", "SUCCESS")
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         val roles = it.data
                         var isShow = false
                         for (i in 0..roles!!.size - 1) {
@@ -212,19 +214,17 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                                 break
                             }
                         }
-                        if (isShow) {
-                            btn_monitoring.visibility = View.VISIBLE
-                        } else {
-                            btn_monitoring.visibility = View.GONE
-                        }
+                        viewModel.setIsShowMonitorTab(isShow)
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
     }
+
 
     private fun toJobDetail(id: String) {
         Log.d("HAUAAA", id)
@@ -237,7 +237,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
         val startDate = getCurrentDateTime().toTimeString("yyyy-MM-dd") + "T00:00:00.000Z"
         val endDate = getCurrentDateTime().toTimeString("yyyy-MM-dd") + "T23:59:00.000Z"
         jobAdapter?.clearAll()
-        jobs?.clear()
+        jobs.clear()
         isEndList = false
         skip = 0
         viewModel.getTodayJob(startDate, endDate, skip = skip)

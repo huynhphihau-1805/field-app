@@ -10,7 +10,6 @@ import com.crayon.fieldapp.data.local.pref.PrefHelper
 import com.crayon.fieldapp.data.remote.response.AttendanceStatus
 import com.crayon.fieldapp.data.remote.response.GetMessageResponse
 import com.crayon.fieldapp.data.remote.response.TaskResponse
-import com.crayon.fieldapp.data.remote.response.TaskType
 import com.crayon.fieldapp.data.repository.TaskRepository
 import com.crayon.fieldapp.ui.base.BaseViewModel
 import com.crayon.fieldapp.ui.screen.detailTask.base.DetailTaskViewModel
@@ -21,10 +20,9 @@ import com.google.maps.android.SphericalUtil
 import io.nlopez.smartlocation.SmartLocation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import studio.phillip.yolo.utils.TaskUtils
 import java.io.File
 
@@ -49,7 +47,7 @@ class AttendanceViewModel(
                 _users.value = it
                 if (it.status == Status.ERROR) {
                     it.message?.let { error ->
-                        viewModelScope?.launch {
+                        viewModelScope.launch {
                             onLoadFail(error)
                         }
                     }
@@ -89,9 +87,8 @@ class AttendanceViewModel(
     private var updateTaskSource: LiveData<Resource<GetMessageResponse>> = MutableLiveData()
     fun upLoadTask(task: TaskResponse, imageUrl: String) =
         viewModelScope.launch(dispatchers.main) {
-            val type = getTypeMedia(imageUrl)
-            val requestBody1: RequestBody =
-                File(imageUrl).asRequestBody(type.toMediaTypeOrNull())
+            val mediaType = getTypeMedia(imageUrl)
+            val requestBody1: RequestBody = RequestBody.create(mediaType, File(imageUrl))
 
             val fileToUpload1: MultipartBody.Part =
                 MultipartBody.Part.createFormData(
@@ -109,12 +106,14 @@ class AttendanceViewModel(
                             file = fileToUpload1
                         )
                     }
+
                     AttendanceStatus.PROCESSING.value -> {
                         updateTaskSource = taskRepository.checkOut(
                             taskId = task.id.toString(),
                             file = fileToUpload1
                         )
                     }
+
                     AttendanceStatus.COMPLETED.value -> {
                         showError(Throwable("Bạn đã chấm công rồi"))
                         return@withContext
@@ -134,11 +133,11 @@ class AttendanceViewModel(
             }
         }
 
-    private fun getTypeMedia(url: String): String {
+    private fun getTypeMedia(url: String): MediaType {
         if (url.contains("mp4")) {
-            return "video/mp4"
+            return MediaType.get("video/mp4")
         } else {
-            return "image/jpeg"
+            return MediaType.get("image/jpeg")
         }
     }
 

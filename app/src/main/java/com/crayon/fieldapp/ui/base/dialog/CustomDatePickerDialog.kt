@@ -1,5 +1,6 @@
 package com.crayon.fieldapp.ui.base.dialog
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -9,19 +10,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.DialogFragment
+import com.applandeo.materialcalendarview.CalendarDay
 import com.applandeo.materialcalendarview.CalendarView
-import com.applandeo.materialcalendarview.EventDay
-import com.applandeo.materialcalendarview.listeners.OnDayClickListener
+import com.applandeo.materialcalendarview.listeners.OnCalendarDayClickListener
 import com.crayon.fieldapp.R
-import java.util.*
+import java.util.Calendar
 
 
-class CustomDatePickerDialog(val events: ArrayList<EventDay>) : DialogFragment() {
+class CustomDatePickerDialog(val events: ArrayList<CalendarDay>) : DialogFragment() {
     lateinit var picker: CalendarView
     lateinit var btnOk: Button
     lateinit var btnCancel: Button
 
     private var mListener: DatePickerDialogListener? = null
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -32,18 +34,17 @@ class CustomDatePickerDialog(val events: ArrayList<EventDay>) : DialogFragment()
                 picker = findViewById(R.id.calendarView)
 
                 val calendar = Calendar.getInstance()
-                events.add(EventDay(calendar, R.drawable.bg_blue_sv_rounded))
-                picker.setEvents(events)
-                picker.setOnDayClickListener(OnDayClickListener { eventDay ->
-                    val clickedDayCalendar: Calendar = eventDay.calendar
-                    mListener?.getDate(clickedDayCalendar)
+                val event = CalendarDay(calendar)
+                event.imageDrawable = resources.getDrawable(R.drawable.bg_blue_sv_rounded, null)
+                events.add(event)
+                picker.setCalendarDays(events)
+
+                picker.setOnCalendarDayClickListener(object : OnCalendarDayClickListener {
+                    override fun onClick(calendarDay: CalendarDay) {
+                        val clickedDayCalendar: Calendar = calendarDay.calendar
+                        mListener?.getDate(clickedDayCalendar)
+                    }
                 })
-
-
-//            btnOk.setOnClickListener {
-//                mListener?.getDate(picker.dayOfMonth, picker.month, picker.year)
-//                this@DatePickerDialog.dismiss()
-//            }
             }
 
     override fun onStart() {
@@ -72,11 +73,5 @@ class CustomDatePickerDialog(val events: ArrayList<EventDay>) : DialogFragment()
 
     interface DatePickerDialogListener {
         fun getDate(calendar: Calendar)
-    }
-
-    fun updateEvent(mEvent: ArrayList<EventDay>) {
-        events.clear()
-        events.addAll(mEvent)
-        picker.setEvents(events)
     }
 }

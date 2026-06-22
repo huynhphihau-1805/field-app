@@ -11,7 +11,6 @@ import com.crayon.fieldapp.data.model.Store
 import com.crayon.fieldapp.databinding.FragmentLoadmoreRefreshBinding
 import com.crayon.fieldapp.ui.base.BaseLoadMoreRefreshFragment
 import com.crayon.fieldapp.ui.base.adapter.NotificationAdapter
-import kotlinx.android.synthetic.main.fragment_loadmore_refresh.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NotificationSentFragment :
@@ -34,7 +33,7 @@ class NotificationSentFragment :
             itemClickListener = { toNotificationDetail(it.id.toString()) }
         )
 
-        recycler_view.apply {
+        binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }

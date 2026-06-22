@@ -50,8 +50,8 @@ abstract class BaseBottomSheetDialogFragment<ViewBinding : ViewDataBinding, View
         return viewBinding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         viewModel.apply {
             isLoading.observe(viewLifecycleOwner, Observer {
                 handleLoading(it == true)
@@ -64,12 +64,6 @@ abstract class BaseBottomSheetDialogFragment<ViewBinding : ViewDataBinding, View
             })
             connectTimeoutEvent.observe(viewLifecycleOwner, Observer {
                 handleErrorMessage(getString(R.string.connect_timeout))
-            })
-            forceUpdateAppEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.force_update_app))
-            })
-            serverMaintainEvent.observe(viewLifecycleOwner, Observer {
-                handleErrorMessage(getString(R.string.server_maintain_message))
             })
         }
     }

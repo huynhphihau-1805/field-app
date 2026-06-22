@@ -4,17 +4,14 @@ import android.os.Bundle
 import android.view.View
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
-import com.google.android.material.tabs.TabLayout
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentManageEmployeeBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.employee.listGroupMember.ListGroupEmployeeFragment
 import com.crayon.fieldapp.ui.screen.monitor.employee.listMembers.ListEmployeeFragment
-import com.crayon.fieldapp.ui.screen.monitor.store.listGroup.ListGroupFragment
-import com.crayon.fieldapp.ui.screen.monitor.store.listStore.ListStoreFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_manage_employee.*
+import com.google.android.material.tabs.TabLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageEmployeeFragment :
@@ -47,7 +44,7 @@ class ManageEmployeeFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

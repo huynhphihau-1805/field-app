@@ -3,14 +3,12 @@ package com.crayon.fieldapp.ui.screen.avatar
 import android.content.Context
 import android.net.Uri
 import android.text.TextUtils
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.crayon.fieldapp.AppDispatchers
 import com.crayon.fieldapp.data.remote.request.CreateUserRequest
-import com.crayon.fieldapp.data.remote.request.UpdateProfileForm
 import com.crayon.fieldapp.data.remote.response.GetMessageResponse
 import com.crayon.fieldapp.data.remote.response.UserResponse
 import com.crayon.fieldapp.data.repository.UserRepository
@@ -20,13 +18,12 @@ import com.crayon.fieldapp.utils.Resource
 import com.crayon.fieldapp.utils.Status
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 class AvatarViewModel(
     private val userRepository: UserRepository, private val dispatchers: AppDispatchers,
@@ -48,10 +45,9 @@ class AvatarViewModel(
     val avatar: LiveData<Resource<GetMessageResponse>> get() = _avatar
     private var avatarSource: LiveData<Resource<GetMessageResponse>> = MutableLiveData()
     fun updateAvatar(avatar: Uri) = viewModelScope.launch(dispatchers.main) {
-            val avatarFile = File(avatar.path)
-
-        val requestBody: RequestBody =
-            avatarFile!!.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val avatarFile = File(avatar.path)
+        val mediaType = MediaType.get("image/jpeg")
+        val requestBody: RequestBody = RequestBody.create(mediaType, avatarFile)
         val avatarFileUpload: MultipartBody.Part =
             MultipartBody.Part.createFormData("avatar", avatarFile.getName(), requestBody)
         val request = CreateUserRequest(
@@ -72,13 +68,17 @@ class AvatarViewModel(
             }
         }
     }
+
     fun updateFullBody(fullBody: Uri) = viewModelScope.launch(dispatchers.main) {
         val fullBodyFile = File(fullBody.path)
-
-        val requestBody: RequestBody =
-            fullBodyFile!!.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val mediaType = MediaType.get("image/jpeg")
+        val requestBody: RequestBody = RequestBody.create(mediaType, fullBodyFile)
         val fullBodyFileUpload: MultipartBody.Part =
-            MultipartBody.Part.createFormData("full_body_image", fullBodyFile.getName(), requestBody)
+            MultipartBody.Part.createFormData(
+                "full_body_image",
+                fullBodyFile.getName(),
+                requestBody
+            )
         val request = CreateUserRequest(
             full_body = fullBodyFileUpload
         )
@@ -127,4 +127,18 @@ class AvatarViewModel(
         return childFile
     }
 
+    fun createFile(
+        url: String,
+        quality: Int,
+    ): File? {
+        if (!url.contains("mp4")) {
+            return BitmapUtils.createImageFileToUpload(
+                context,
+                url,
+                quality
+            )
+        } else {
+            return File(url)
+        }
+    }
 }

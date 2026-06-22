@@ -8,25 +8,28 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
-import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.remote.response.PromotionResponse
+import com.crayon.fieldapp.databinding.DialogEditQuantityBinding
 import com.crayon.fieldapp.ui.widgets.MoneyTextWatcher
 import com.crayon.fieldapp.ui.widgets.NumericKeyBoardTransformationMethod
 import com.crayon.fieldapp.utils.Utils
-import kotlinx.android.synthetic.main.dialog_edit_quantity.*
 
 class EditQuantityDialog(
     val item: PromotionResponse,
     val onUpdateQuantityClick: (Int) -> Unit = {}
 ) : DialogFragment() {
 
+    private var _binding: DialogEditQuantityBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? =
-        inflater.inflate(R.layout.dialog_edit_quantity, container, false).apply {
-        }
+    ): View? {
+        _binding = DialogEditQuantityBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     override fun onStart() {
         super.onStart()
@@ -42,25 +45,23 @@ class EditQuantityDialog(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            dialog.edt_price?.transformationMethod = NumericKeyBoardTransformationMethod()
-            btn_cancel?.setOnClickListener {
+            binding.edtPrice.transformationMethod = NumericKeyBoardTransformationMethod()
+
+            binding.btnCancel.setOnClickListener {
                 this@EditQuantityDialog.dismiss()
             }
 
-            btn_update?.setOnClickListener {
-                val newPrice = edt_price?.text.toString()
+            binding.btnUpdate.setOnClickListener {
+                val newPrice = binding.edtPrice?.text.toString()
                 onUpdateQuantityClick.invoke(newPrice.replace(",", "").toInt())
                 this@EditQuantityDialog.dismiss()
             }
-            btn_cancel?.setOnClickListener {
-                this@EditQuantityDialog.dismiss()
-            }
 
-            edt_price?.addTextChangedListener(object : MoneyTextWatcher(edt_price) {
-
+            binding.edtPrice.addTextChangedListener(object : MoneyTextWatcher(binding.edtPrice) {
+                // You can handle text changes here
             })
 
-            txt_product_name?.text = item.name
+            binding.txtProductName?.text = item.name
         }
     }
 
@@ -69,4 +70,8 @@ class EditQuantityDialog(
         Utils.hideKeyboard(requireActivity())
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

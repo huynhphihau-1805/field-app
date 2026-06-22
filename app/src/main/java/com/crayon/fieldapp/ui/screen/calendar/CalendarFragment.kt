@@ -17,7 +17,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.getCurrentDateTime
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_calendar.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
@@ -53,19 +52,19 @@ class CalendarFragment : BaseFragment<FragmentCalendarBinding, CalendarViewModel
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        calendar.setOnDateChangeListener(this)
+        binding.calendar.setOnDateChangeListener(this)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        txt_date.text = "Ngày " + Calendar.getInstance().timeInMillis.toTimeString("dd/MM/yyyy")
+        binding.txtDate.text = "Ngày " + Calendar.getInstance().timeInMillis.toTimeString("dd/MM/yyyy")
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack?.setSingleClick {
             findNavController().navigateUp()
         }
 
-        rv_jobs.apply {
+        binding.rvJobs.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = jobAdapter
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -94,11 +93,11 @@ class CalendarFragment : BaseFragment<FragmentCalendarBinding, CalendarViewModel
                     when (it.status) {
                         Status.LOADING -> {
                             mIsLoading = true
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
                         Status.SUCCESS -> {
                             mIsLoading = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
 
                             it.data?.let {
                                 jobAdapter?.addAll(it as ArrayList<JobResponse>)
@@ -106,7 +105,7 @@ class CalendarFragment : BaseFragment<FragmentCalendarBinding, CalendarViewModel
                         }
                         Status.ERROR -> {
                             mIsLoading = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }
@@ -128,7 +127,7 @@ class CalendarFragment : BaseFragment<FragmentCalendarBinding, CalendarViewModel
         calendar.set(Calendar.HOUR, 0)
         calendar.set(Calendar.MINUTE, 0)
 
-        txt_date.text = "Ngày " + calendar.timeInMillis.toTimeString("dd/MM/yyyy")
+        binding.txtDate.text = "Ngày " + calendar.timeInMillis.toTimeString("dd/MM/yyyy")
         startDate = calendar.timeInMillis.toTimeString("yyyy-MM-dd") + "T00:00:00.000Z"
         endDate = calendar.timeInMillis.toTimeString("yyyy-MM-dd") + "T23:59:00.000Z"
         skip = 0

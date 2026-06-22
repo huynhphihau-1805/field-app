@@ -14,7 +14,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.Utils
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
-import kotlinx.android.synthetic.main.fragment_verify_otp_step2.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.concurrent.TimeUnit
 
@@ -34,34 +33,30 @@ class VerifyOtpStep2Fragment(val onNextClick: () -> Unit = {}) :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        btn_resend?.visibility = View.VISIBLE
-        btn_resend?.isEnabled = false
-        btn_resend?.setTextColor(resources.getColor(R.color.colorGrayDisable, null))
+        binding.btnResend.visibility = View.VISIBLE
+        binding.btnResend.isEnabled = false
+        binding.btnResend.setTextColor(resources.getColor(R.color.colorGrayDisable, null))
 
-        timer = startLoginTimer(txt_time, {
-            btn_resend?.isEnabled = true
-            btn_resend?.setTextColor(resources.getColor(R.color.colorAccent, null))
-            txt_time?.visibility = View.GONE
+        timer = startLoginTimer(binding.txtTime, {
+            binding.btnResend.isEnabled = true
+            binding.btnResend.setTextColor(resources.getColor(R.color.colorAccent, null))
+            binding.txtTime.visibility = View.GONE
         }, {})
 
-        btn_resend?.setSingleClick {
-            btn_resend?.isClickable = false
-            btn_resend?.setTextColor(resources.getColor(R.color.colorGrayDisable, null))
-            txt_time?.visibility = View.VISIBLE
+        binding.btnResend.setSingleClick {
+            binding.btnResend.isClickable = false
+            binding.btnResend.setTextColor(resources.getColor(R.color.colorGrayDisable, null))
+            binding.txtTime.visibility = View.VISIBLE
             if (taskId != null && _phone != null) {
                 timer?.start()
                 viewModel.resendOtpCustomer(taskId = taskId.toString(), phone = _phone.toString())
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        btn_next?.setSingleClick {
-            val otp = edt_otp.text.toString()
-            if (otp.isNullOrBlank() || otp.length < 6) {
-                edt_otp.setError("Vui lòng nhập mã OTP")
+        binding.btnNext.setSingleClick {
+            val otp = binding.edtOtp.text.toString()
+            if (otp.isBlank() || otp.length < 6) {
+                binding.edtOtp.setError("Vui lòng nhập mã OTP")
                 return@setSingleClick
             }
             Utils.hideKeyboard(requireActivity())
@@ -74,10 +69,11 @@ class VerifyOtpStep2Fragment(val onNextClick: () -> Unit = {}) :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         timer?.cancel()
                         it.data?.let {
                             val dialog = OtpSuccessDialog({
@@ -87,8 +83,9 @@ class VerifyOtpStep2Fragment(val onNextClick: () -> Unit = {}) :
 
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         val dialog = OtpFailedDialog({
 
                         })
@@ -102,22 +99,25 @@ class VerifyOtpStep2Fragment(val onNextClick: () -> Unit = {}) :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         requireContext().showMessageDialog(
                             title = it.data?.message.toString()
                         )
                         timer?.start()
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -171,7 +171,7 @@ class VerifyOtpStep2Fragment(val onNextClick: () -> Unit = {}) :
 
     fun setCustomerPhone(mPhone: String) {
         this._phone = mPhone
-        txt_hint_otp?.text = "Mã OTP được gửi đến số " + this._phone
+//        binding.txtHintOtp.text = "Mã OTP được gửi đến số " + this._phone
     }
 
     companion object {

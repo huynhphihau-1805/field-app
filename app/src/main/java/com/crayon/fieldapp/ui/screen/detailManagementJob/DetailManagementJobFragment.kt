@@ -11,9 +11,9 @@ import com.crayon.fieldapp.databinding.FragmentDetailManagementJobBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.ManagementTaskAdapter
 import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.formatHourAndDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showConfirmDialog
-import kotlinx.android.synthetic.main.fragment_detail_management_job.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailManagementJobFragment :
@@ -51,7 +51,7 @@ class DetailManagementJobFragment :
             }
         )
 
-        rv_task.apply {
+        binding.rvTask.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterTask
         }
@@ -65,11 +65,27 @@ class DetailManagementJobFragment :
                     Status.LOADING -> {
 //                        showLoading()
                     }
+
                     Status.SUCCESS -> {
 //                        hideLoading()
                         it.data?.let { job ->
                             job.project?.let { project ->
                                 projectId = project.id.toString()
+                                project.name?.let {
+                                    binding.txtProjectName.text = it
+                                }
+                                project.status?.let {
+                                    binding.txtStatus.text = it
+                                }
+                            }
+                            job.agency?.name?.let {
+                                binding.txtAgencyName.text = it
+                            }
+                            job.startTime?.let {
+                                binding.txtStartDate.text = formatHourAndDate(it)
+                            }
+                            job.endTime?.let {
+                                binding.txtEndTime.text = formatHourAndDate(it)
                             }
                             job.store?.let { store ->
                                 storeId = store.id.toString()
@@ -79,6 +95,7 @@ class DetailManagementJobFragment :
                             }
                         }
                     }
+
                     Status.ERROR -> {
 //                        hideLoading()
                     }
@@ -88,16 +105,18 @@ class DetailManagementJobFragment :
             tasks.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapterTask.submitList(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
 
@@ -106,25 +125,27 @@ class DetailManagementJobFragment :
             isRemoveTask.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         getListTask(agencyId, jobId)
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
 
             })
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        fab_create?.setSingleClick {
+        binding.fabCreate.setSingleClick {
             val bundel = bundleOf(
                 "projectId" to projectId,
                 "agencyId" to agencyId,
@@ -136,9 +157,6 @@ class DetailManagementJobFragment :
         }
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-    }
 
     private fun toTaskDetail(id: String) {
 //        val bundel = bundleOf("taskId" to id)

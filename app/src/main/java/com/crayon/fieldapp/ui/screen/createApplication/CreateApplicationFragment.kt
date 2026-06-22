@@ -14,12 +14,15 @@ import com.crayon.fieldapp.data.remote.response.PicProjectResponse
 import com.crayon.fieldapp.databinding.FragmentCreateApplicationBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.SimpleSPAdapter
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_create_application.*
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.formatDate
+import com.crayon.fieldapp.utils.formatHour
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showMessageDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Calendar
+import java.util.Locale
 
 class CreateApplicationFragment :
     BaseFragment<FragmentCreateApplicationBinding, CreateApplicationViewModel>() {
@@ -51,7 +54,7 @@ class CreateApplicationFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -59,7 +62,7 @@ class CreateApplicationFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        txt_date.setOnClickListener {
+        binding.txtDate.setOnClickListener {
             DatePickerDialog(
                 requireContext(),
                 dateSetListener,
@@ -69,17 +72,17 @@ class CreateApplicationFragment :
             ).show()
         }
 
-        imb_ic_filter.setOnClickListener {
-            val reason = edt_reason.text.toString().trim()
-            val type = typeApplicationAdapter.getItem(sp_type.selectedItemPosition).id
+        binding.imbIcFilter.setOnClickListener {
+            val reason = binding.edtReason.text.toString().trim()
+            val type = typeApplicationAdapter.getItem(binding.spType.selectedItemPosition).id
             val applicationForm = CreateApplicationForm()
             applicationForm.agency = agencyId
             applicationForm.leader = leaderId
             applicationForm.type = type
             applicationForm.project = projectId
             applicationForm.reason = reason
-            applicationForm.start_time = txt_date.text.toString()
-            applicationForm.end_time = txt_date.text.toString()
+            applicationForm.start_time = binding.txtDate.text.toString()
+            applicationForm.end_time = binding.txtDate.text.toString()
             if (type.equals(ApplicationType.SWITCH_SHIFT.value)) {
                 applicationForm.replacement = replacementId
                 applicationForm.job = jobId
@@ -95,16 +98,16 @@ class CreateApplicationFragment :
         }
 
         agencyAdapter = SimpleSPAdapter(requireContext(), arrayListOf())
-        sp_agency.setAdapter(agencyAdapter)
+        binding.spAgency.setAdapter(agencyAdapter)
 
         projectAdapter = SimpleSPAdapter(requireContext(), arrayListOf())
-        sp_project.setAdapter(projectAdapter)
+        binding.spProject.setAdapter(projectAdapter)
 
         replacementAdapter = SimpleSPAdapter(requireContext(), arrayListOf())
-        sp_replacement.setAdapter(replacementAdapter)
+        binding.spReplacement.setAdapter(replacementAdapter)
 
         jobAdapter = SimpleSPAdapter(requireContext(), arrayListOf())
-        sp_job.setAdapter(jobAdapter)
+        binding.spJob.setAdapter(jobAdapter)
 
         val listApplications = ApplicationType.values().map {
             SimpleModel(it.text, it.value)
@@ -114,17 +117,18 @@ class CreateApplicationFragment :
             requireContext(),
             listApplications as ArrayList<SimpleModel>
         )
-        sp_type.setAdapter(typeApplicationAdapter)
+        binding.spType.setAdapter(typeApplicationAdapter)
 
         viewModel.apply {
             getListRole()
             listAgency.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { listRole ->
                             val items =
                                 listRole.map {
@@ -136,8 +140,9 @@ class CreateApplicationFragment :
                             agencyAdapter.addItems(items as ArrayList<SimpleModel>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
 
@@ -146,16 +151,18 @@ class CreateApplicationFragment :
             createApplication.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         context?.showMessageDialog("Tạo đơn thành công") {
                             findNavController().navigateUp()
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -163,10 +170,11 @@ class CreateApplicationFragment :
             listProject.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { listProject ->
                             listProjectResponse.addAll(listProject)
                             val items =
@@ -179,8 +187,9 @@ class CreateApplicationFragment :
                             projectAdapter.addItems(items as ArrayList<SimpleModel>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -188,10 +197,11 @@ class CreateApplicationFragment :
             listMember.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { listMember ->
                             val items =
                                 listMember.map {
@@ -203,8 +213,9 @@ class CreateApplicationFragment :
                             replacementAdapter.addItems(items as ArrayList<SimpleModel>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -212,10 +223,11 @@ class CreateApplicationFragment :
             listJob.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { listJob ->
                             val items =
                                 listJob.map {
@@ -232,14 +244,15 @@ class CreateApplicationFragment :
                             jobAdapter.addItems(items as ArrayList<SimpleModel>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
         }
 
-        sp_agency?.onItemSelectedListener = object :
+        binding.spAgency?.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -253,7 +266,7 @@ class CreateApplicationFragment :
             }
         }
 
-        sp_project?.onItemSelectedListener = object :
+        binding.spProject.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -271,7 +284,7 @@ class CreateApplicationFragment :
             }
         }
 
-        sp_type?.onItemSelectedListener = object :
+        binding.spType.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -281,25 +294,25 @@ class CreateApplicationFragment :
                 view: View?, position: Int, id: Long
             ) {
                 if (typeApplicationAdapter.getItem(position).id.equals(ApplicationType.SWITCH_SHIFT.value)) {
-                    sp_replacement.visibility = View.VISIBLE
-                    tv_replacement.visibility = View.VISIBLE
+                    binding.spReplacement.visibility = View.VISIBLE
+                    binding.tvReplacement.visibility = View.VISIBLE
 
-                    sp_job.visibility = View.VISIBLE
-                    tv_job.visibility = View.VISIBLE
+                    binding.spJob.visibility = View.VISIBLE
+                    binding.tvJob.visibility = View.VISIBLE
                     projectId?.let {
                         viewModel.getMemberOfProject(it)
                         viewModel.getMyJobOfProject(it)
                     }
                 } else {
-                    sp_replacement.visibility = View.GONE
-                    tv_replacement.visibility = View.GONE
-                    sp_job.visibility = View.GONE
-                    tv_job.visibility = View.GONE
+                    binding.spReplacement.visibility = View.GONE
+                    binding.tvReplacement.visibility = View.GONE
+                    binding.spJob.visibility = View.GONE
+                    binding.tvJob.visibility = View.GONE
                 }
             }
         }
 
-        sp_replacement?.onItemSelectedListener = object :
+        binding.spReplacement.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -312,7 +325,7 @@ class CreateApplicationFragment :
             }
         }
 
-        sp_job?.onItemSelectedListener = object :
+        binding.spJob.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -330,7 +343,7 @@ class CreateApplicationFragment :
     private fun formatTime() {
         val myFormat = "yyyy-MM-dd"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
-        txt_date.text = sdf.format(calendar.time).toString()
+        binding.txtDate.text = sdf.format(calendar.time).toString()
     }
 
     private val dateSetListener =

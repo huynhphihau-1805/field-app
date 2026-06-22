@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -16,16 +18,18 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.dialog.TimeKeepingDialog
 import com.crayon.fieldapp.ui.base.dialog.getPhoto.GetPhotoDialogFragment
 import com.crayon.fieldapp.ui.screen.detailAttachment.image.ImageAdapter
-import com.crayon.fieldapp.ui.screen.detailTask.DetailTaskFragment
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaData
 import com.crayon.fieldapp.ui.screen.detailTask.base.DetailTaskViewModel
 import com.crayon.fieldapp.ui.screen.imageDialog.EditNoteDialog
 import com.crayon.fieldapp.ui.screen.imageDialog.ImageDialog
 import com.crayon.fieldapp.ui.screen.videoDialog.VideoDialog
-import com.crayon.fieldapp.utils.*
+import com.crayon.fieldapp.utils.FileManager
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showConfirmDialog
+import com.crayon.fieldapp.utils.showMessageDialog
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_report_update_status.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -46,6 +50,7 @@ class ReportUpdateStatusFragment :
     private lateinit var updateImageAdapter: ImageAdapter
     private var imageId: String? = null
     private lateinit var typeRecord: String
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,119 +91,54 @@ class ReportUpdateStatusFragment :
                 )
                 videoDialog.show(childFragmentManager, videoDialog.tag)
             }
-        }, removeClickListener = {
+        }, removeClickListener = { item ->
             context.showConfirmDialog(
                 title = "Bạn có muốn xoá ảnh này không?",
                 textPositive = "Có",
                 textNegative = "Không",
                 positiveListener = {
                     taskResponse?.let {
-                        viewModel.removeImage(it.id.toString(), arrayListOf(imageId.toString()))
+                        imageId = item.id.toString()
+                        viewModel.removeImage(it.id.toString(), arrayListOf(item.id.toString()))
                     }
                 }
             )
         }, context = requireContext())
 
         viewModel.getDetailTask(taskId)
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
-            ?.observe(viewLifecycleOwner, Observer { result ->
-                if (!newImageAdapter.contains(result)) {
-                    showImage(result)
-                }
-            })
-        viewModel.task.observe(viewLifecycleOwner, Observer {
-            it.getContentIfNotHandled()?.let {
-                when (it.status) {
-                    Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
-                    }
-                    Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
-                        tv_title.text = it.data!!.type.name
-                        taskResponse = it.data!!
-                        taskResponse?.let {
-                            val listUrl = it.attachments?.filter {
-                                it.type!!.contains("image")
-                            }?.map {
-                                MediaData(
-                                    it.id,
-                                    it.thumbnailUrl.toString(),
-                                    it.imageUrl.toString(),
-                                    MediaAdapter.MEDIA_IMAGE,
-                                    it.note,
-                                    false
-                                )
-                            } as ArrayList<MediaData>
-                            updateImageAdapter.addImages(listUrl)
-                        }
-                    }
-                    Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+
+        galleryLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data = result.data
+                    val selectedImageUri = data?.data
+                    val path = FileManager.getPath(requireContext(), selectedImageUri)
+                    val file = viewModel.createFile(path, 100)
+                    file?.let {
+                        showImage(it.absolutePath.toString())
                     }
                 }
             }
-        })
 
-        viewModel.apply {
-            updateTask.observe(viewLifecycleOwner, Observer {
-                when (it.status) {
-                    Status.LOADING -> {
-                        showLoading()
-                    }
-                    Status.SUCCESS -> {
-                        hideLoading()
-                        newImageAdapter.clearData()
-                        taskResponse?.let { mTaskResponse ->
-                            context.showMessageDialog("Cập nhật " + mTaskResponse.type!!.name + " thành công",
-                                positiveListener = {
-                                    findNavController().navigateUp()
-                                })
-                        }
-
-                    }
-                    Status.ERROR -> {
-                        hideLoading()
-                    }
-                }
-            })
-
-            isRemoveTask.observe(viewLifecycleOwner, Observer {
-                when (it.status) {
-                    Status.LOADING -> {
-                        updateImageAdapter.showProgress(false)
-                        showLoading()
-                    }
-                    Status.SUCCESS -> {
-                        hideLoading()
-                        updateImageAdapter.deleteImage(imageId.toString())
-                    }
-                    Status.ERROR -> {
-                        hideLoading()
-                    }
-                }
-            })
-        }
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        rv_new_image.setLayoutManager(GridLayoutManager(requireContext(), 2))
-        rv_new_image.setHasFixedSize(true)
-        rv_new_image.setAdapter(newImageAdapter)
+        binding.rvNewImage.setLayoutManager(GridLayoutManager(requireContext(), 2))
+        binding.rvNewImage.setHasFixedSize(true)
+        binding.rvNewImage.setAdapter(newImageAdapter)
 
-        rv_upload_image.setLayoutManager(GridLayoutManager(requireContext(), 2))
-        rv_upload_image.setHasFixedSize(true)
-        rv_upload_image.setAdapter(updateImageAdapter)
+        binding.rvUploadImage.setLayoutManager(GridLayoutManager(requireContext(), 2))
+        binding.rvUploadImage.setHasFixedSize(true)
+        binding.rvUploadImage.setAdapter(updateImageAdapter)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_attachment?.setSingleClick {
+        binding.imbAttachment.setSingleClick {
             val taskString = Gson().toJson(taskResponse).toString()
             val bundle = bundleOf("task" to taskString)
             findNavController().navigate(
@@ -207,7 +147,7 @@ class ReportUpdateStatusFragment :
             )
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             if (newImageAdapter.itemCount > 4) {
                 context?.showMessageDialog("Bạn chỉ được chụp tối đa 3 tấm")
             } else {
@@ -223,7 +163,7 @@ class ReportUpdateStatusFragment :
             }
         }
 
-        img_picture?.setSingleClick {
+        binding.imgPicture.setSingleClick {
             typeRecord = "image"
             taskResponse?.let { mTaskResponse ->
                 val taskType = mTaskResponse.type!!.id!!.toInt()
@@ -232,12 +172,7 @@ class ReportUpdateStatusFragment :
                         if (isTakeImageOnlyFromCamera(taskType)) {
                             openCamera()
                         } else {
-                            val getPhotoDialogFragment = GetPhotoDialogFragment()
-                            getPhotoDialogFragment.setListener(this)
-                            getPhotoDialogFragment.show(
-                                childFragmentManager,
-                                getPhotoDialogFragment.tag
-                            )
+                            openCamera()
                         }
                     } else {
                         val dialog = TimeKeepingDialog()
@@ -258,19 +193,14 @@ class ReportUpdateStatusFragment :
                     if (isTakeImageOnlyFromCamera(taskType)) {
                         openCamera()
                     } else {
-                        val getPhotoDialogFragment = GetPhotoDialogFragment()
-                        getPhotoDialogFragment.setListener(this)
-                        getPhotoDialogFragment.show(
-                            childFragmentManager,
-                            getPhotoDialogFragment.tag
-                        )
+                        openCamera()
                     }
                 }
             }
 
         }
 
-        img_video?.setSingleClick {
+        binding.imgVideo.setSingleClick {
             typeRecord = "video"
             taskResponse?.let { mTaskResponse ->
                 val taskType = mTaskResponse.type!!.id!!.toInt()
@@ -298,21 +228,98 @@ class ReportUpdateStatusFragment :
 
         }
 
-    }
+        viewModel.title.observe(viewLifecycleOwner, { title ->
+            binding.tvTitle.text = title
+        })
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                CODE_REQUEST_GALLERY -> {
-                    var selectedImageUri = data!!.data
-                    val path = FileManager.getPath(requireContext(), selectedImageUri)
-                    showImage(path)
+        findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
+            ?.observe(viewLifecycleOwner, Observer { result ->
+                if (!newImageAdapter.contains(result)) {
+                    showImage(result)
+                }
+            })
+
+        viewModel.title.observe(viewLifecycleOwner, { title ->
+            binding.tvTitle.text = title
+        })
+
+        viewModel.task.observe(viewLifecycleOwner, { data ->
+            data.getContentIfNotHandled()?.let {
+                when (it.status) {
+                    Status.LOADING -> {
+                        binding.pbLoading.visibility = View.VISIBLE
+                    }
+
+                    Status.SUCCESS -> {
+                        binding.pbLoading.visibility = View.GONE
+                        taskResponse = it.data!!
+                        taskResponse?.let {
+                            val listUrl = it.attachments?.filter {
+                                it.type!!.contains("image")
+                            }?.map {
+                                MediaData(
+                                    it.id,
+                                    it.thumbnailUrl.toString(),
+                                    it.imageUrl.toString(),
+                                    MediaAdapter.MEDIA_IMAGE,
+                                    it.note,
+                                    false
+                                )
+                            } as ArrayList<MediaData>
+                            updateImageAdapter.addImages(listUrl)
+                        }
+                    }
+
+                    Status.ERROR -> {
+                        binding.pbLoading.visibility = View.GONE
+                    }
                 }
             }
-        }
-    }
+        })
 
+        viewModel.isRemoveTask.observe(viewLifecycleOwner, Observer {
+            when (it.status) {
+                Status.LOADING -> {
+                    updateImageAdapter.showProgress(false)
+                    binding.pbLoading.visibility = View.VISIBLE
+                }
+
+                Status.SUCCESS -> {
+                    binding.pbLoading.visibility = View.GONE
+                    updateImageAdapter.deleteImage(imageId.toString())
+                }
+
+                Status.ERROR -> {
+                    binding.pbLoading.visibility = View.GONE
+                }
+            }
+        })
+
+        viewModel.updateTask.observe(viewLifecycleOwner, {
+            when (it.status) {
+                Status.LOADING -> {
+                    binding.pbLoading.visibility = View.VISIBLE
+                }
+
+                Status.SUCCESS -> {
+                    binding.pbLoading.visibility = View.GONE
+                    newImageAdapter.clearData()
+                    taskResponse?.let { mTaskResponse ->
+                        context.showMessageDialog("Cập nhật " + mTaskResponse.type!!.name + " thành công",
+                            positiveListener = {
+                                findNavController().navigateUp()
+                            })
+                    }
+
+                }
+
+                Status.ERROR -> {
+                    binding.pbLoading.visibility = View.GONE
+                }
+            }
+
+        })
+    }
 
     companion object {
         const val CODE_REQUEST_GALLERY = 1
@@ -368,6 +375,7 @@ class ReportUpdateStatusFragment :
             TaskType.CHECK_LIST.value -> {
                 return false
             }
+
             TaskType.REPORT_END_SHIFT.value,
             TaskType.COUNT.value,
             TaskType.UPDATE_STATUS.value,
@@ -402,10 +410,7 @@ class ReportUpdateStatusFragment :
             val intent = Intent()
             intent.type = "image/*"
             intent.action = Intent.ACTION_GET_CONTENT
-            startActivityForResult(
-                Intent.createChooser(intent, "Select Picture"),
-                DetailTaskFragment.CODE_REQUEST_GALLERY
-            )
+            galleryLauncher.launch(intent)
         }
     }
 
@@ -413,7 +418,7 @@ class ReportUpdateStatusFragment :
         if (newImageAdapter.itemCount >= 3) {
             context?.showMessageDialog("Bạn chỉ được chụp tối đa 3 tấm")
         } else {
-            val bundle = bundleOf("isTakeVideo" to false)
+            val bundle = bundleOf("isTakeImage" to false)
             findNavController().navigate(R.id.action_global_CameraFragment, bundle)
         }
     }
@@ -425,6 +430,7 @@ class ReportUpdateStatusFragment :
             TaskType.COUNT.value -> {
                 return false
             }
+
             TaskType.UPDATE_STATUS.value,
             TaskType.CHECK_LIST.value,
             TaskType.VISIT_STORE.value,
@@ -438,6 +444,7 @@ class ReportUpdateStatusFragment :
             TaskType.TIME_KEEPING.value -> {
                 return true
             }
+
             else -> {
                 return false
             }

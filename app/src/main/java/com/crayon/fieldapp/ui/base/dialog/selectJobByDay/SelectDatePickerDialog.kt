@@ -7,25 +7,29 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
+import com.applandeo.materialcalendarview.CalendarDay
 import com.applandeo.materialcalendarview.EventDay
-import com.applandeo.materialcalendarview.listeners.OnDayClickListener
+import com.applandeo.materialcalendarview.listeners.OnCalendarDayClickListener
+import com.applandeo.materialcalendarview.listeners.OnCalendarPageChangeListener
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.data.remote.response.PromotionResponse
 import com.crayon.fieldapp.data.remote.response.TaskResponse
-import com.crayon.fieldapp.databinding.FragmentAttendanceBinding
+import com.crayon.fieldapp.databinding.CustomerSelectDatePickerBinding
 import com.crayon.fieldapp.ui.base.BaseDialogFragment
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.toCalendar
 import com.crayon.fieldapp.utils.toDate
-import kotlinx.android.synthetic.main.customer_select_date_picker.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Calendar
 
 
-class SelectDatePickerDialog(val projectId: String, val agencyId: String, val taskType: Int, val itemClickListener: (Calendar) -> Unit = {}) :
-    BaseDialogFragment<FragmentAttendanceBinding, SelectDatePickerViewModel>() {
+class SelectDatePickerDialog(
+    val projectId: String,
+    val agencyId: String,
+    val taskType: Int,
+    val itemClickListener: (Calendar) -> Unit = {}
+) :
+    BaseDialogFragment<CustomerSelectDatePickerBinding, SelectDatePickerViewModel>() {
     override val layoutId: Int = R.layout.customer_select_date_picker
     override val viewModel: SelectDatePickerViewModel by viewModel()
     var events: ArrayList<EventDay> = ArrayList()
@@ -45,53 +49,66 @@ class SelectDatePickerDialog(val projectId: String, val agencyId: String, val ta
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading?.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading?.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { mList ->
                             setJobEvents(mList as ArrayList<TaskResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading?.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
 
-        btn_Ok?.setSingleClick {
+        binding.btnOk.setSingleClick {
             itemClickListener.invoke(calendar)
             dismiss()
         }
 
-        btn_cancel?.setSingleClick {
+        binding.btnCancel.setSingleClick {
             dismiss()
         }
 
-        calendarView?.setOnDayClickListener(OnDayClickListener { eventDay ->
-            calendar = eventDay.calendar
+
+        binding.calendarView.setOnCalendarDayClickListener(object : OnCalendarDayClickListener {
+            override fun onClick(calendarDay: CalendarDay) {
+                calendar = calendarDay.calendar
+            }
+
         })
 
-        calendarView?.setOnPreviousPageChangeListener {
-            calendar.add(Calendar.MONTH, -1)
-            viewModel.getTaskByProject(
-                calendar,
-                projectId = projectId,
-                agencyId = agencyId,
-                taskType = taskType
-            )
-        }
+        binding.calendarView.setOnPreviousPageChangeListener(object : OnCalendarPageChangeListener {
+            override fun onChange() {
+                calendar.add(Calendar.MONTH, -1)
+                viewModel.getTaskByProject(
+                    calendar,
+                    projectId = projectId,
+                    agencyId = agencyId,
+                    taskType = taskType
+                )
+            }
 
-        calendarView?.setOnForwardPageChangeListener {
-            calendar.add(Calendar.MONTH, 1)
-            viewModel.getTaskByProject(
-                calendar,
-                projectId = projectId,
-                agencyId = agencyId,
-                taskType = taskType
-            )
-        }
+        })
+
+
+        binding.calendarView.setOnForwardPageChangeListener(object : OnCalendarPageChangeListener {
+            override fun onChange() {
+                calendar.add(Calendar.MONTH, 1)
+                viewModel.getTaskByProject(
+                    calendar,
+                    projectId = projectId,
+                    agencyId = agencyId,
+                    taskType = taskType
+                )
+            }
+
+        })
 
     }
 
@@ -123,7 +140,7 @@ class SelectDatePickerDialog(val projectId: String, val agencyId: String, val ta
                 events.add(EventDay(it, R.drawable.bg_has_job))
             }
         }
-        calendarView?.setEvents(events)
+        binding.calendarView.setEvents(events)
     }
 
 

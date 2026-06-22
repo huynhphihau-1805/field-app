@@ -12,8 +12,8 @@ import com.crayon.fieldapp.databinding.FragmentDetailProjectBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.ManageStoreAdapter
 import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.formatDate
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_detail_project.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailProjectFragment : BaseFragment<FragmentDetailProjectBinding, DetailProjectViewModel>() {
@@ -34,28 +34,24 @@ class DetailProjectFragment : BaseFragment<FragmentDetailProjectBinding, DetailP
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        fab_add_employee?.setSingleClick {
+        binding.fabAddEmployee.setSingleClick {
             val bundel = bundleOf("agencyId" to agencyId, "projectId" to projectId)
             findNavController().navigate(R.id.to_addMember_project, bundel)
         }
 
-        fab_add_store?.setSingleClick {
+        binding.fabAddStore.setSingleClick {
             val bundel = bundleOf("agencyId" to agencyId, "projectId" to projectId)
             findNavController().navigate(R.id.to_store_project, bundel)
         }
 
-        rl_member?.setSingleClick {
+        binding.rlMember.setSingleClick {
             val bundel = bundleOf("projectId" to projectId, "agencyId" to agencyId)
             findNavController().navigate(R.id.to_member_project, bundel)
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         adapterStore = ManageStoreAdapter(
             arrayListOf(),
@@ -66,7 +62,7 @@ class DetailProjectFragment : BaseFragment<FragmentDetailProjectBinding, DetailP
             itemClickListener = { toManageJobDetail(it) }
         )
 
-        rv_store.apply {
+        binding.rvStore.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterStore
         }
@@ -79,24 +75,66 @@ class DetailProjectFragment : BaseFragment<FragmentDetailProjectBinding, DetailP
             stores.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapterStore?.addStore(it as ArrayList<StoreOfProjectResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
 
             })
 
+            project.observe(viewLifecycleOwner, Observer { projectInfo ->
+                when (projectInfo.status) {
+                    Status.LOADING -> {
+                        binding.pbLoading.visibility = View.VISIBLE
+                    }
+                    Status.SUCCESS -> {
+                        binding.pbLoading.visibility = View.GONE
+                        projectInfo.data?.let {
+                            it.status?.let {
+                                binding.txtStatus.text = it
+                            }
+                            it.owner?.profile?.let {
+                                binding.txtCreator.text = it
+                            }
+                            it.agency?.name.let {
+                                binding.txtAgencyName.text = it
+                            }
+                            it.brandName?.let {
+                                binding.txtBrand.text = it
+                            }
+                            it.industry?.let {
+                                binding.txtIndustry.text = it
+                            }
+                            it.startDate?.let {
+                                binding.txtStartDate.text = formatDate(it)
+                            }
+                            it.endDate?.let {
+                                binding.txtEndTime.text = formatDate(it)
+                            }
+                            it.name?.let {
+                                binding.tvTitle.text = it
+                            }
+                        }
+                    }
+                    Status.ERROR -> {
+                        binding.pbLoading.visibility = View.GONE
+                    }
+                }
+            })
+
             members.observe(viewLifecycleOwner, Observer {
                 it.data?.let {
-                    txt_member.text = it.size.toString()
+                    binding.txtMember.text = it.size.toString()
                 }
             })
 
@@ -107,8 +145,8 @@ class DetailProjectFragment : BaseFragment<FragmentDetailProjectBinding, DetailP
             })
 
         }
-
     }
+
 
     private fun toManageJobDetail(store: StoreOfProjectResponse) {
         val bundel = bundleOf(

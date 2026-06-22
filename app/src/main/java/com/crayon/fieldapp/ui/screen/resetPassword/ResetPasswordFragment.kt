@@ -7,7 +7,6 @@ import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentResetPasswordBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
-import kotlinx.android.synthetic.main.fragment_reset_password.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ResetPasswordFragment : BaseFragment<FragmentResetPasswordBinding, ResetPasswordViewModel>() {
@@ -32,24 +31,24 @@ class ResetPasswordFragment : BaseFragment<FragmentResetPasswordBinding, ResetPa
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        btn_update.setOnClickListener {
+        binding.btnUpdate.setOnClickListener {
             viewModel.apply {
-                val password = edt_password.text.toString().trim()
-                val confirmPassword = edt_confirm_password.text.toString().trim()
+                val password = binding.edtPassword.text.toString().trim()
+                val confirmPassword = binding.edtConfirmPassword.text.toString().trim()
                 if (password.isNullOrBlank()) {
-                    edt_password.setError("Vui lòng nhập mật khẩu mới")
+                    binding.edtPassword.setError("Vui lòng nhập mật khẩu mới")
                     return@setOnClickListener
                 }
-                if(password.length < 8){
-                    edt_confirm_password.setError("Mật khẩu phải có ít nhất 8 kí tự")
+                if (password.length < 8) {
+                    binding.edtConfirmPassword.setError("Mật khẩu phải có ít nhất 8 kí tự")
                     return@setOnClickListener
                 }
                 if (confirmPassword.isNullOrBlank()) {
-                    edt_confirm_password.setError("Vui lòng nhập xác nhận mật khẩu mới")
+                    binding.edtConfirmPassword.setError("Vui lòng nhập xác nhận mật khẩu mới")
                     return@setOnClickListener
                 }
                 if (!confirmPassword.equals(password)) {
-                    edt_confirm_password.setError("Mật khẩu không trùng khớp")
+                    binding.edtConfirmPassword.setError("Mật khẩu không trùng khớp")
                     return@setOnClickListener
                 }
                 resetPassword(

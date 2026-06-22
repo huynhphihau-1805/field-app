@@ -1,5 +1,6 @@
 package com.crayon.fieldapp.ui.screen.notification
 
+//import androidx.recyclerview.widget.MergeAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -11,24 +12,18 @@ import androidx.lifecycle.Observer
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
-//import androidx.recyclerview.widget.MergeAdapter
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentListPicNotificationBinding
+import com.crayon.fieldapp.databinding.FragmentNotificationBinding
 import com.crayon.fieldapp.fcm.MyFirebaseMessagingService
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.MemberRequestAdapter
 import com.crayon.fieldapp.ui.base.adapter.NotificationAdapter
 import com.crayon.fieldapp.ui.base.adapter.SwitchShiftRequestAdapter
 import com.crayon.fieldapp.utils.Status
-import com.crayon.fieldapp.utils.getCurrentDateTime
-import com.crayon.fieldapp.utils.toTimeString
-import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.android.synthetic.main.fragment_list_pic_notification.*
-import kotlinx.android.synthetic.main.fragment_list_pic_notification.pb_loading
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NotificationFragment :
-    BaseFragment<FragmentListPicNotificationBinding, NotificationViewModel>() {
+    BaseFragment<FragmentNotificationBinding, NotificationViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_notification
 
@@ -38,8 +33,8 @@ class NotificationFragment :
         super.onActivityCreated(savedInstanceState)
         reloadData()
 
-        refresh_layout?.setOnRefreshListener {
-            refresh_layout?.isRefreshing = false
+        binding.refreshLayout.setOnRefreshListener {
+            binding.refreshLayout.isRefreshing = false
             reloadData()
         }
 
@@ -72,7 +67,7 @@ class NotificationFragment :
         val allAdapter =
             ConcatAdapter(memberRequestAdapter, switchShiftAdapter, notificationAdapter)
 
-        rv_notification.apply {
+        binding.rvNotification.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = allAdapter
         }
@@ -82,16 +77,18 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             memberRequestAdapter.submitList(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -101,17 +98,19 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             notificationAdapter.submitList(it)
-                            rv_notification?.scrollToPosition(0)
+                            binding.rvNotification.scrollToPosition(0)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -121,16 +120,18 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             switchShiftAdapter.submitList(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -140,14 +141,16 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         reloadData()
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -157,14 +160,16 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         reloadData()
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -174,14 +179,16 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         reloadData()
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -191,14 +198,16 @@ class NotificationFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         reloadData()
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }

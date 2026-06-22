@@ -76,21 +76,21 @@ public class PinEntryEditText extends EditText {
         mLinesPaint = new Paint(getPaint());
         mLinesPaint.setStrokeWidth(mLineStroke);
         if (!isInEditMode()) {
-            TypedValue outValue = new TypedValue();
-            context.getTheme().resolveAttribute(R.attr.colorControlActivated,
-                    outValue, true);
-            final int colorActivated = outValue.data;
-            mColors[0] = colorActivated;
-
-            context.getTheme().resolveAttribute(R.attr.colorPrimaryDark,
-                    outValue, true);
-            final int colorDark = outValue.data;
-            mColors[1] = colorDark;
-
-            context.getTheme().resolveAttribute(R.attr.colorControlHighlight,
-                    outValue, true);
-            final int colorHighlight = outValue.data;
-            mColors[2] = colorHighlight;
+            // TODO
+//            TypedValue outValue = new TypedValue();
+//            context.getTheme().resolveAttribute(R.attr.colorControlActivated,
+//                    outValue, true);
+//            final int colorActivated = outValue.data;
+//            mColors[0] = colorActivated;
+//            context.getTheme().resolveAttribute(R.attr.colorPrimaryDark,
+//                    outValue, true);
+//            final int colorDark = outValue.data;
+//            mColors[1] = colorDark;
+//
+//            context.getTheme().resolveAttribute(R.attr.colorControlHighlight,
+//                    outValue, true);
+//            final int colorHighlight = outValue.data;
+//            mColors[2] = colorHighlight;
         }
         setBackgroundResource(0);
         mSpace = multi * mSpace; //convert to pixels for our density

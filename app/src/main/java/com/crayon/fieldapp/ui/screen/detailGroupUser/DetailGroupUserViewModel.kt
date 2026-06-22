@@ -18,7 +18,8 @@ class DetailGroupUserViewModel(
     fun getMemberOfGroupUser(agencyId: String, groupUserId: String) {
         viewModelScope.launch {
             try {
-                members.value = groupUserRepository.getMemberOfGroup(agencyId, groupUserId).data
+                members.value = groupUserRepository.getMemberOfGroup(agencyId, groupUserId).data ?: emptyList()
+
             } catch (e: Exception) {
                 onLoadFail(e)
             }

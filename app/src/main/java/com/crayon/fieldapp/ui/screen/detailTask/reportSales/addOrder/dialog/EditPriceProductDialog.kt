@@ -8,18 +8,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
-import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.remote.response.ProductResponse
+import com.crayon.fieldapp.databinding.DialogEditPriceBinding
 import com.crayon.fieldapp.ui.widgets.MoneyTextWatcher
 import com.crayon.fieldapp.ui.widgets.NumericKeyBoardTransformationMethod
 import com.crayon.fieldapp.utils.Utils
-import kotlinx.android.synthetic.main.dialog_edit_price.*
-import kotlinx.android.synthetic.main.dialog_edit_price.view.*
-import kotlinx.android.synthetic.main.dialog_edit_quantity.*
-import kotlinx.android.synthetic.main.dialog_edit_quantity.btn_cancel
-import kotlinx.android.synthetic.main.dialog_edit_quantity.btn_update
-import kotlinx.android.synthetic.main.dialog_edit_quantity.edt_price
-import kotlinx.android.synthetic.main.dialog_edit_quantity.txt_product_name
 import java.text.DecimalFormat
 
 class EditPriceProductDialog(
@@ -27,13 +20,18 @@ class EditPriceProductDialog(
     val onUpdatePriceClick: (Int) -> Unit = {}
 ) : DialogFragment() {
 
+    private var _binding: DialogEditPriceBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? =
-        inflater.inflate(R.layout.dialog_edit_price, container, false).apply {
-        }
+    ): View? {
+        // Inflate the layout using ViewBinding
+        _binding = DialogEditPriceBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     override fun onStart() {
         super.onStart()
@@ -49,27 +47,27 @@ class EditPriceProductDialog(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            dialog.edt_price?.transformationMethod = NumericKeyBoardTransformationMethod()
-            btn_cancel?.setOnClickListener {
-                this@EditPriceProductDialog.dismiss()
+
+            // Set the transformation method for the price field
+            binding.edtPrice.transformationMethod = NumericKeyBoardTransformationMethod()
+
+            binding.btnCancel.setOnClickListener {
+                dismiss()
             }
-            btn_cancel?.setOnClickListener {
-                this@EditPriceProductDialog.dismiss()
-            }
 
-
-            edt_price?.addTextChangedListener(object : MoneyTextWatcher(edt_price) {
-
+            binding.edtPrice.addTextChangedListener(object : MoneyTextWatcher(binding.edtPrice) {
+                // You can add logic here if needed
             })
 
-            txt_product_name?.text = product.name
+            binding.txtProductName.text = product.name
             val format = DecimalFormat("#,###")
             format.maximumFractionDigits = 0
-            dialog.txt_current_price?.text = format.format(product.price)
-            btn_update?.setOnClickListener {
-                val newPrice = edt_price?.text.toString()
+            binding.txtCurrentPrice.text = format.format(product.price)
+
+            binding.btnUpdate.setOnClickListener {
+                val newPrice = binding.edtPrice.text.toString()
                 onUpdatePriceClick.invoke(newPrice.replace(",", "").toInt())
-                this@EditPriceProductDialog.dismiss()
+                dismiss()
             }
         }
     }
@@ -79,4 +77,8 @@ class EditPriceProductDialog(
         Utils.hideKeyboard(requireActivity())
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

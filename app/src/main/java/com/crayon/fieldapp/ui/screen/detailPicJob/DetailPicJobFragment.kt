@@ -13,9 +13,10 @@ import com.crayon.fieldapp.databinding.FragmentDetailPicJobBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailPicJob.adapter.ListTaskAdapter
 import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.formatDate
+import com.crayon.fieldapp.utils.formatHourAndDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_pic_job.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPicJobViewModel>() {
@@ -34,15 +35,11 @@ class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPic
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        rv_task.apply {
+        binding.rvTask.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -52,7 +49,7 @@ class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPic
                 toTaskDetail(it.id.toString(), it.type.identifier)
             })
 
-        rv_task.apply {
+        binding.rvTask.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterTask
         }
@@ -64,16 +61,18 @@ class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPic
             tasks.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapterTask.addAll(it as ArrayList<TaskResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
 
@@ -83,18 +82,36 @@ class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPic
                 when (it.status) {
                     Status.LOADING -> {
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             jobResponse = Gson().toJson(it)
+                            it.project?.name?.let {
+                                binding.txtProjectName.text = it
+                            }
+                            it.agency?.name?.let {
+                                binding.txtAgencyName.text = it
+                            }
+                            it.status?.let {
+                                binding.txtStatus.text = it
+                            }
+                            it.startTime?.let {
+                                binding.txtStartDate.text = formatHourAndDate(it)
+                            }
+                            it.endTime?.let {
+                                binding.txtEndTime.text = formatHourAndDate(it)
+                            }
                         }
                     }
+
                     Status.ERROR -> {
                     }
                 }
 
             })
         }
+
     }
 
     private fun toTaskDetail(taskId: String, type: Int) {
@@ -123,7 +140,7 @@ class DetailPicJobFragment : BaseFragment<FragmentDetailPicJobBinding, DetailPic
                 bundel
             )
         } else if (type == TaskType.REPORT_COMPITETOR.value) {
-            val bundel = bundleOf("taskId" to taskId,  "job" to jobResponse.toString())
+            val bundel = bundleOf("taskId" to taskId, "job" to jobResponse.toString())
             findNavController().navigate(
                 R.id.action_detailPicJobFragment_to_reportCompetitorFragment,
                 bundel

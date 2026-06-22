@@ -16,15 +16,6 @@ import com.crayon.fieldapp.utils.formatHour
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.toDate
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.imb_ic_back
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.rv_task
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_end_time
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_pic_name
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_project_name
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_shift
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_start_date
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.txt_status
-import kotlinx.android.synthetic.main.fragment_detail_update_status_at_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import studio.phillip.yolo.utils.TimeFormatUtils
 
@@ -48,38 +39,38 @@ class DetailUpdateStatusAtStoreFragment() :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
 
         taskResponse?.let {
             it.attachments?.let {
-                tv_num_image.text = it.size.toString()
+                binding.tvNumImage.text = it.size.toString()
                 if (it.size > 0) {
                     if (it.size == 1) {
                         it.get(0).createdAt?.toDate("yyyy-MM-dd'T'HH:mm")?.let {
-                            txt_start_date.text = TimeFormatUtils.formatHour(it)
-                            txt_end_time.text = TimeFormatUtils.formatHour(it)
+                            binding.txtStartDate.text = TimeFormatUtils.formatHour(it)
+                            binding.txtEndTime.text = TimeFormatUtils.formatHour(it)
                         }
                     } else {
                         it.get(0).createdAt?.toDate("yyyy-MM-dd'T'HH:mm")?.let {
-                            txt_start_date.text = TimeFormatUtils.formatHour(it)
+                            binding.txtStartDate.text = TimeFormatUtils.formatHour(it)
                         }
                         it.last().createdAt?.toDate("yyyy-MM-dd'T'HH:mm")?.let {
-                            txt_end_time.text = TimeFormatUtils.formatHour(it)
+                            binding.txtEndTime.text = TimeFormatUtils.formatHour(it)
                         }
                     }
                 }
             }
 
-            txt_project_name.text = it.project!!.name
+            binding.txtProjectName.text = it.project!!.name
             it.pic?.let {
-                txt_pic_name.text = it.lastName + " " + it.firstName
+                binding.txtPicName.text = it.lastName + " " + it.firstName
             }
-            txt_shift.text =
+            binding.txtShift.text =
                 formatHour(it.job!!.startTime.toString()) + "-" + formatHour(it.job!!.endTime.toString())
-            txt_status.text = it.status
-            tv_title.text = it.store!!.name
+            binding.txtStatus.text = it.status
+            binding.tvTitle.text = it.store!!.name
 
             var listUrl = ArrayList<MediaData>()
             it.attachments?.forEach {
@@ -132,9 +123,9 @@ class DetailUpdateStatusAtStoreFragment() :
                     }
 
                 })
-            rv_task.setLayoutManager(GridLayoutManager(requireContext(), 2))
-            rv_task.setHasFixedSize(true)
-            rv_task.setAdapter(mediaAdapter)
+            binding.rvTask.setLayoutManager(GridLayoutManager(requireContext(), 2))
+            binding.rvTask.setHasFixedSize(true)
+            binding.rvTask.setAdapter(mediaAdapter)
         }
 
     }

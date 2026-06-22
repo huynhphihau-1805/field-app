@@ -11,19 +11,19 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.crayon.fieldapp.R
+import com.crayon.fieldapp.databinding.DialogAddNoteBinding
 import com.crayon.fieldapp.utils.setSingleClick
 import com.github.chrisbanes.photoview.OnSingleFlingListener
-import kotlinx.android.synthetic.main.dialog_add_note.*
-import kotlinx.android.synthetic.main.dialog_image.*
-import kotlinx.android.synthetic.main.dialog_image.photo_view
 
 
 class EditNoteDialog(
     private var index: Int,
     private var note: String? = null,
     private val imageUrl: String
-) :
-    DialogFragment() {
+) : DialogFragment() {
+
+    private var _binding: DialogAddNoteBinding? = null
+    private val binding get() = _binding!!
 
     var mListener: EditNoteListener? = null
 
@@ -31,29 +31,33 @@ class EditNoteDialog(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? =
-        inflater.inflate(R.layout.dialog_add_note, container, false).apply {
-
-        }
+    ): View? {
+        _binding = DialogAddNoteBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Set initial note if available
         note?.let {
-            edtNote.setText(it)
+            binding.edtNote.setText(it)
         }
 
-        imb_ic_back.setSingleClick {
+        // Handle back button click
+        binding.imbIcBack.setSingleClick {
             dismiss()
         }
 
-        imb_ic_save.setSingleClick {
-            var note = edtNote.text.toString().toString()
-            this.mListener?.onEditNote(note, index)
+        // Handle save button click
+        binding.imbIcSave.setSingleClick {
+            val note = binding.edtNote.text.toString()
+            mListener?.onEditNote(note, index)
             dismiss()
         }
 
-        photo_view.setOnSingleFlingListener(object : OnSingleFlingListener {
+        // Set fling listener for photo view
+        binding.photoView.setOnSingleFlingListener(object : OnSingleFlingListener {
             override fun onFling(
                 e1: MotionEvent,
                 e2: MotionEvent,
@@ -61,43 +65,31 @@ class EditNoteDialog(
                 velocityY: Float
             ): Boolean {
                 try {
-                    val diffY: Float = e2.getY() - e1.getY()
-                    val diffX: Float = e2.getX() - e1.getX()
+                    val diffY: Float = e2.y - e1.y
+                    val diffX: Float = e2.x - e1.x
                     if (Math.abs(diffX) > Math.abs(diffY)) {
                         if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                            if (diffX > 0) {
-                                this@EditNoteDialog.dismiss()
-                            } else {
-                                this@EditNoteDialog.dismiss()
-                            }
+                            dismiss()
                             return true
                         }
-                    } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(
-                            velocityY
-                        ) > SWIPE_VELOCITY_THRESHOLD
-                    ) {
-                        if (diffY > 0) {
-                            this@EditNoteDialog.dismiss()
-                        } else {
-                            this@EditNoteDialog.dismiss()
-                        }
+                    } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        dismiss()
                         return true
                     }
                 } catch (exception: Exception) {
                     exception.printStackTrace()
                 }
-
                 return false
             }
-
         })
 
+        // Load image using Glide
         Glide.with(this)
             .asBitmap()
             .load(imageUrl)
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                    photo_view.setImageBitmap(resource)
+                    binding.photoView.setImageBitmap(resource)
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
@@ -109,8 +101,6 @@ class EditNoteDialog(
         super.onStart()
         val dialog = dialog
         if (dialog != null) {
-
-            // Set gravity of dialog
             dialog.setCanceledOnTouchOutside(true)
             val window = dialog.window
             val wlp = window!!.attributes
@@ -122,12 +112,15 @@ class EditNoteDialog(
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
             val lp = window.attributes
-
-            // Set Over touch screen is transparent
             lp.dimAmount = 0.2f
             lp.flags = WindowManager.LayoutParams.FLAG_DIM_BEHIND
             dialog.window?.attributes = lp
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     interface EditNoteListener {
@@ -135,7 +128,7 @@ class EditNoteDialog(
     }
 
     fun setEditNoteListener(listener: EditNoteListener) {
-        this.mListener = listener
+        mListener = listener
     }
 
     companion object {

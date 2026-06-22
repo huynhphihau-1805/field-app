@@ -1,7 +1,5 @@
 package com.crayon.fieldapp.ui.screen.main
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,13 +12,10 @@ import com.crayon.fieldapp.databinding.FragmentMainBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.home.HomeFragment
-import com.crayon.fieldapp.ui.screen.job.JobFragment
 import com.crayon.fieldapp.ui.screen.notification.NotificationFragment
 import com.crayon.fieldapp.ui.screen.profile.ProfileFragment
 import com.crayon.fieldapp.utils.Status
-import com.crayon.fieldapp.utils.showDialog
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.fragment_main.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -32,12 +27,9 @@ class MainFragment : BaseFragment<FragmentMainBinding, MainViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupViewPager()
-        tab_dashboard!!.setupWithViewPager(vp_dashboard)
+        binding.tabDashboard.setupWithViewPager(binding.vpDashboard)
         setupTablayout()
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         viewModel.apply {
             fetchCurrentLocation()
             isUpdateVersion.observe(viewLifecycleOwner, Observer {
@@ -46,6 +38,7 @@ class MainFragment : BaseFragment<FragmentMainBinding, MainViewModel>() {
                         Status.LOADING -> {
 
                         }
+
                         Status.SUCCESS -> {
                             val data = it.data
                             data?.let {
@@ -68,6 +61,7 @@ class MainFragment : BaseFragment<FragmentMainBinding, MainViewModel>() {
                                 }
                             }
                         }
+
                         Status.ERROR -> {
 
                         }
@@ -85,7 +79,7 @@ class MainFragment : BaseFragment<FragmentMainBinding, MainViewModel>() {
         mViewPagerAdapter.addFragment(NotificationFragment(), "")
         mViewPagerAdapter.addFragment(ProfileFragment(), "")
 
-        vp_dashboard.apply {
+        binding.vpDashboard.apply {
             offscreenPageLimit = 4
             adapter = mViewPagerAdapter
         }
@@ -103,18 +97,23 @@ class MainFragment : BaseFragment<FragmentMainBinding, MainViewModel>() {
         icNotification.setImageResource(R.drawable.ic_gray_notification)
         icHome.setImageResource(R.drawable.ic_gray_home)
 
-        tab_dashboard!!.getTabAt(0)!!.customView = icHome
-        tab_dashboard.getTabAt(1)!!.customView = icNotification
-        tab_dashboard.getTabAt(2)!!.customView = icProfile
+        binding.tabDashboard.getTabAt(0)!!.customView = icHome
+        binding.tabDashboard.getTabAt(1)!!.customView = icNotification
+        binding.tabDashboard.getTabAt(2)!!.customView = icProfile
 
         // Set color selected
         icHome.setImageResource(R.drawable.ic_blue_home)
-        tab_dashboard.setSelectedTabIndicatorColor(getColor(requireContext(), R.color.colorPrimary))
-        tab_dashboard.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+        binding.tabDashboard.setSelectedTabIndicatorColor(
+            getColor(
+                requireContext(),
+                R.color.colorPrimary
+            )
+        )
+        binding.tabDashboard.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                icHome.setImageResource(if (tab_dashboard.getTabAt(0)!!.isSelected) R.drawable.ic_blue_home else R.drawable.ic_gray_home)
-                icNotification.setImageResource(if (tab_dashboard.getTabAt(1)!!.isSelected) R.drawable.ic_blue_notification else R.drawable.ic_gray_notification)
-                icProfile.setImageResource(if (tab_dashboard.getTabAt(2)!!.isSelected) R.drawable.ic_blue_profile else R.drawable.ic_gray_profile)
+                icHome.setImageResource(if (binding.tabDashboard.getTabAt(0)!!.isSelected) R.drawable.ic_blue_home else R.drawable.ic_gray_home)
+                icNotification.setImageResource(if (binding.tabDashboard.getTabAt(1)!!.isSelected) R.drawable.ic_blue_notification else R.drawable.ic_gray_notification)
+                icProfile.setImageResource(if (binding.tabDashboard.getTabAt(2)!!.isSelected) R.drawable.ic_blue_profile else R.drawable.ic_gray_profile)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {

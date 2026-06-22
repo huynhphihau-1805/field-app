@@ -16,10 +16,8 @@ import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.android.synthetic.main.fragment_list_product.*
-import kotlinx.android.synthetic.main.fragment_login.*
-import kotlinx.android.synthetic.main.fragment_verify_otp.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewModel>() {
@@ -46,54 +44,57 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
         )
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        btn_submit.setOnClickListener {
+
+        binding.btnSubmit.setOnClickListener {
             viewModel.apply {
+                showLoadingDialog()
                 FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                    dismissLoadingDialog()
                     if (!task.isSuccessful) {
                         return@OnCompleteListener
                     }
                     val token = task.result
                     fcm_token = token.toString()
-                    if (edt_otp.text.toString().isNullOrEmpty()) {
-                        edt_otp.setError("Vui lòng nhập mã OTP")
+                    if (binding.edtOtp.text.toString().isNullOrEmpty()) {
+                        binding.edtOtp.setError("Vui lòng nhập mã OTP")
                         return@OnCompleteListener
                     }
-
                     if (mMode == VERIFY_LOGIN_MODE) {
-                        clickVerifyOtp(phone, edt_otp.text.toString(), device_id, token.toString())
+                        clickVerifyOtp(
+                            phone,
+                            binding.edtOtp.text.toString(),
+                            device_id,
+                            token.toString()
+                        )
                     } else {
                         clickVerifyOtpPassword(
                             phone,
-                            edt_otp.text.toString()
+                            binding.edtOtp.text.toString()
                         )
                     }
                 })
             }
         }
-        txt_resend?.visibility = View.VISIBLE
+        binding.txtResend.visibility = View.VISIBLE
 
-        timer = startLoginTimer(time, {
-            txt_resend?.isEnabled = true
-            time?.visibility = View.GONE
+        timer = startLoginTimer(binding.time, {
+            binding.txtResend.isEnabled = true
+            binding.time.visibility = View.GONE
         }, {})
 
-        txt_resend?.setSingleClick {
+        binding.txtResend?.setSingleClick {
             if (mMode == VERIFY_LOGIN_MODE) {
-                txt_resend?.isEnabled = false
-                time?.visibility = View.VISIBLE
+                binding.txtResend.isEnabled = false
+                binding.time.visibility = View.VISIBLE
                 viewModel?.resendOtp(phone, password)
             } else {
                 viewModel?.resendOtpPassword(phone)
             }
         }
 
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         viewModel.apply {
             isVerifySuccess.observe(viewLifecycleOwner, Observer {
                 it.getContentIfNotHandled()?.let {
@@ -101,8 +102,9 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
                         Status.LOADING -> {
                             showLoadingDialog()
                         }
+
                         Status.SUCCESS -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                             if (timer != null) {
                                 timer?.cancel()
                             }
@@ -110,7 +112,7 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
                                 findNavController().navigate(R.id.action_verify_to_main)
                             } else {
                                 val bundel = bundleOf(
-                                    "otp" to edt_otp.text.toString().trim(),
+                                    "otp" to binding.edtOtp.text.toString().trim(),
                                     "phone" to phone,
                                     "password" to password,
                                     "device_id" to device_id,
@@ -122,8 +124,9 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
                                 )
                             }
                         }
+
                         Status.ERROR -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                         }
                     }
                 }
@@ -135,15 +138,17 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
                         Status.LOADING -> {
                             showLoadingDialog()
                         }
+
                         Status.SUCCESS -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                             requireContext().showMessageDialog(
                                 title = "Đã gửi lại mã OTP?"
                             )
                             timer?.start()
                         }
+
                         Status.ERROR -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                         }
                     }
                 }
@@ -155,16 +160,18 @@ class VerifyOtpFragment : BaseFragment<FragmentVerifyOtpBinding, VerifyOtpViewMo
                         Status.LOADING -> {
                             showLoadingDialog()
                         }
+
                         Status.SUCCESS -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                             requireContext().showMessageDialog(
                                 title = "Đã gửi lại mã OTP?"
                             )
                             timer?.start()
 
                         }
+
                         Status.ERROR -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                         }
                     }
                 }

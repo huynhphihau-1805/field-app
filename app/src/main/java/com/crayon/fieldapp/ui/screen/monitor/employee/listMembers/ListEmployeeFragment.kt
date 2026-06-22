@@ -9,7 +9,6 @@ import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentListEmployeeBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.UserAdapter
-import kotlinx.android.synthetic.main.fragment_list_employee.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListEmployeeFragment : BaseFragment<FragmentListEmployeeBinding, ListEmployeeViewModel>() {
@@ -32,7 +31,7 @@ class ListEmployeeFragment : BaseFragment<FragmentListEmployeeBinding, ListEmplo
             itemClickListener = { toUserDetail(it.id) }
         )
 
-        rv_employee.apply {
+        binding.rvEmployee.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -48,6 +47,9 @@ class ListEmployeeFragment : BaseFragment<FragmentListEmployeeBinding, ListEmplo
 
     private fun toUserDetail(id: String) {
         val bundel = bundleOf("userId" to id)
-        findNavController().navigate(R.id.action_mangagEmployeFragment_to_DetailUserFragment, bundel)
+        findNavController().navigate(
+            R.id.action_mangagEmployeFragment_to_DetailUserFragment,
+            bundel
+        )
     }
 }

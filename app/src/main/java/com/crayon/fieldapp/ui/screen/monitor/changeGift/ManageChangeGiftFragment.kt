@@ -8,17 +8,16 @@ import androidx.viewpager.widget.ViewPager
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.ProjectStatus
 import com.crayon.fieldapp.data.remote.response.TaskType
-import com.crayon.fieldapp.databinding.FragmentManageReportTrackingBinding
+import com.crayon.fieldapp.databinding.FragmentManageChangeGiftBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.listProject.ListProjectFragment
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.fragment_manage_update_status.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageChangeGiftFragment :
-    BaseFragment<FragmentManageReportTrackingBinding, ManageChangeGiftViewModel>() {
+    BaseFragment<FragmentManageChangeGiftBinding, ManageChangeGiftViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_manage_change_gift
 
@@ -42,12 +41,8 @@ class ManageChangeGiftFragment :
         viewPager = view.findViewById(R.id.vp_project)
 
         setupViewPager()
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

@@ -4,15 +4,17 @@ import android.content.Context
 import android.graphics.Typeface
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.remote.response.JobResponse
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.item_job.view.*
-import java.util.*
+import com.crayon.fieldapp.databinding.ItemJobBinding
+import com.crayon.fieldapp.utils.formatHour
+import com.crayon.fieldapp.utils.isAM
+import com.crayon.fieldapp.utils.isPreviousDay
+import com.crayon.fieldapp.utils.isToday
+import com.crayon.fieldapp.utils.toTimeLong
+import java.util.Calendar
 
 class TodayJobAdapter constructor(
     val items: ArrayList<JobResponse>,
@@ -22,9 +24,8 @@ class TodayJobAdapter constructor(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.item_job, parent, false)
-        val holder = JobViewHolder(view)
-        return holder
+        val binding = ItemJobBinding.inflate(inflater, parent, false)
+        return JobViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: JobViewHolder, position: Int) {
@@ -33,62 +34,47 @@ class TodayJobAdapter constructor(
         val startTimeJob = data.startTime.toString().toTimeLong("yyyy-MM-dd'T'HH:mm") ?: 0
 
         if (startTimeJob.isToday()) {
-            var threadhold_start = startTimeJob - 60 * 60 * 1000 // truoc 1h
-            Log.d("AAAHAU",  "now:" + now + "/ threadhold_start: " + threadhold_start + "start: "+ startTimeJob)
+            val threadhold_start = startTimeJob - 60 * 60 * 1000 // 1 hour before
+            Log.d("AAAHAU", "now: $now / threadhold_start: $threadhold_start start: $startTimeJob")
             if (now >= threadhold_start) {
                 enableJob(holder)
             } else {
-                disableJob(holder = holder, isClick = false)
+                disableJob(holder, isClick = false)
             }
         } else {
             if (startTimeJob.isPreviousDay()) {
-                disableJob(holder = holder, isClick = false)
+                disableJob(holder, isClick = false)
             } else {
-                disableJob(holder = holder, isClick = true)
+                disableJob(holder, isClick = true)
             }
         }
         data.store?.name?.let {
-            holder.txtStore.text = it
+            holder.binding.txtStoreName.text = it
         }
 
         data.project?.name?.let {
-            holder.txtProjectName.text = it
+            holder.binding.txtProjectName.text = it
         }
         val start_date = formatHour(data.startTime.toString())
         val end_date = formatHour(data.endTime.toString())
-        var timeAM = "Sáng"
-        if (startTimeJob.isAM()) {
-            timeAM = "Sáng"
-        } else {
-            timeAM = "Chiều"
+        val timeAM = if (startTimeJob.isAM()) "Sáng" else "Chiều"
+
+        holder.binding.root.setOnClickListener {
+            itemClickListener(items[holder.adapterPosition])
         }
 
-        holder.itemView.setOnClickListener {
-            itemClickListener(items.get(holder.absoluteAdapterPosition))
+        val shift = "$start_date-$end_date"
+        holder.binding.txtShift.text = shift
+        holder.binding.txtAm.text = "($timeAM)"
+        data.numOfImage?.let {
+            holder.binding.txtImage.text = it.toString()
         }
-
-        val shift = start_date.toString() + "-" + end_date
-        holder.txtTime.text = shift.toString()
-        holder.itemView.txt_am.text = "(" + timeAM + ")"
     }
 
-    inner class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var txtStore: TextView
-        var txtProjectName: TextView
-        var txtTime: TextView
-        var txt_am: TextView
-
-        init {
-            txtStore = itemView.findViewById(R.id.txt_store_name)
-            txtProjectName = itemView.findViewById(R.id.txt_project_name)
-            txtTime = itemView.findViewById(R.id.txt_shift)
-            txt_am = itemView.findViewById(R.id.txt_am)
-        }
-
-    }
+    inner class JobViewHolder(val binding: ItemJobBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun getItemCount(): Int {
-        return this.items.size
+        return items.size
     }
 
     fun addAll(jobs: ArrayList<JobResponse>) {
@@ -102,30 +88,40 @@ class TodayJobAdapter constructor(
     }
 
     private fun enableJob(holder: JobViewHolder) {
-        holder.txtStore.setTextColor(context.resources.getColor(R.color.colorAccent, null))
-        holder.txtProjectName.setTextColor(
+        holder.binding.txtStoreName.setTextColor(
             context.resources.getColor(
                 R.color.colorAccent,
                 null
             )
         )
-        holder.txtTime.setTextColor(context.resources.getColor(R.color.colorAccent, null))
-        holder.txt_am.setTextColor(context.resources.getColor(R.color.colorAccent, null))
-        holder.txt_am.setTypeface(holder.txt_am.getTypeface(), Typeface.BOLD)
-        holder.itemView.isEnabled = true
+        holder.binding.txtProjectName.setTextColor(
+            context.resources.getColor(
+                R.color.colorAccent,
+                null
+            )
+        )
+        holder.binding.txtShift.setTextColor(context.resources.getColor(R.color.colorAccent, null))
+        holder.binding.txtAm.setTextColor(context.resources.getColor(R.color.colorAccent, null))
+        holder.binding.txtAm.setTypeface(holder.binding.txtAm.typeface, Typeface.BOLD)
+        holder.binding.root.isEnabled = true
     }
 
     private fun disableJob(holder: JobViewHolder, isClick: Boolean) {
-        holder.txtStore.setTextColor(context.resources.getColor(R.color.colorGray, null))
-        holder.txtProjectName.setTextColor(
+        holder.binding.txtStoreName.setTextColor(
             context.resources.getColor(
                 R.color.colorGray,
                 null
             )
         )
-        holder.txtTime.setTextColor(context.resources.getColor(R.color.colorGray, null))
-        holder.txt_am.setTextColor(context.resources.getColor(R.color.colorGray, null))
-        holder.txt_am.setTypeface(holder.txt_am.getTypeface(), Typeface.NORMAL)
-        holder.itemView.isEnabled = isClick
+        holder.binding.txtProjectName.setTextColor(
+            context.resources.getColor(
+                R.color.colorGray,
+                null
+            )
+        )
+        holder.binding.txtShift.setTextColor(context.resources.getColor(R.color.colorGray, null))
+        holder.binding.txtAm.setTextColor(context.resources.getColor(R.color.colorGray, null))
+        holder.binding.txtAm.setTypeface(holder.binding.txtAm.typeface, Typeface.NORMAL)
+        holder.binding.root.isEnabled = isClick
     }
 }

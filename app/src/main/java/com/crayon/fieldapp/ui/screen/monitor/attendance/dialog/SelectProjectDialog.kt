@@ -12,24 +12,26 @@ import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.RecyclerView
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.SelectItem
+import com.crayon.fieldapp.databinding.DialogSelectProjectBinding
 import com.crayon.fieldapp.ui.screen.monitor.attendance.adapter.SelectProjectRVAdapter
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.dialog_select_project.*
-import kotlinx.android.synthetic.main.dialog_select_project.view.*
 
 class SelectProjectDialog(val itemClickListener: (SelectItem) -> Unit = {}) : DialogFragment() {
     lateinit var adapter: SelectProjectRVAdapter
     lateinit var mLayoutManager: RecyclerView.LayoutManager
+    private var _binding: DialogSelectProjectBinding? = null
+    private val binding get() = _binding!!
 
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? =
-        inflater.inflate(R.layout.dialog_select_project, container, false).apply {
-
-            btn_choose?.setSingleClick {
+    ): View? {
+        // Ánh xạ binding
+        _binding = DialogSelectProjectBinding.inflate(inflater, container, false)
+        return binding.root.apply {
+            binding.btnChoose.setSingleClick {
                 Log.d("AAA", "btn_choose")
                 val agency = adapter.getSelectedItem()
                 agency?.let {
@@ -40,23 +42,20 @@ class SelectProjectDialog(val itemClickListener: (SelectItem) -> Unit = {}) : Di
 
             this@SelectProjectDialog.arguments?.let {
                 val items = it.getSerializable("projects") as ArrayList<SelectItem>
-                this@SelectProjectDialog.activity?.let {
-                    adapter = SelectProjectRVAdapter(items, it, {
-                        btn_choose?.setBackgroundColor(
-                            resources.getColor(
-                                R.color.colorAccent,
-                                null
-                            )
+                this@SelectProjectDialog.activity?.let { activity ->
+                    adapter = SelectProjectRVAdapter(items, activity, {
+                        binding.btnChoose.setBackgroundColor(
+                            resources.getColor(R.color.colorAccent, null)
                         )
-                        btn_choose?.isEnabled = true
+                        binding.btnChoose.isEnabled = true
                     })
-                    mLayoutManager = androidx.recyclerview.widget.LinearLayoutManager(it)
-                    rv_project?.setLayoutManager(mLayoutManager)
-                    rv_project?.adapter = adapter
+                    mLayoutManager = androidx.recyclerview.widget.LinearLayoutManager(activity)
+                    binding.rvProject.layoutManager = mLayoutManager
+                    binding.rvProject.adapter = adapter
                 }
-
             }
         }
+    }
 
 
     override fun onStart() {
@@ -74,5 +73,10 @@ class SelectProjectDialog(val itemClickListener: (SelectItem) -> Unit = {}) : Di
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

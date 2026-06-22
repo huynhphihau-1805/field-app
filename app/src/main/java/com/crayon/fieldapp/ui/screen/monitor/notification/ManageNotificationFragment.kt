@@ -4,18 +4,17 @@ import android.os.Bundle
 import android.view.View
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
-import com.google.android.material.tabs.TabLayout
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentNotificationBinding
+import com.crayon.fieldapp.databinding.FragmentManageNotificationBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.notification.sent.NotificationSentFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_report.*
+import com.google.android.material.tabs.TabLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageNotificationFragment :
-    BaseFragment<FragmentNotificationBinding, ManageNotificationViewModel>() {
+    BaseFragment<FragmentManageNotificationBinding, ManageNotificationViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_manage_notification
 
@@ -43,7 +42,7 @@ class ManageNotificationFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

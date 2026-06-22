@@ -2,10 +2,8 @@ package com.crayon.fieldapp.ui.base.adapter
 
 import androidx.recyclerview.widget.DiffUtil
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.data.model.Task
 import com.crayon.fieldapp.data.remote.response.TaskResponse
 import com.crayon.fieldapp.databinding.ItemManagementTaskBinding
-import com.crayon.fieldapp.databinding.ItemTaskBinding
 import com.crayon.fieldapp.ui.base.BaseRecyclerAdapter
 import com.crayon.fieldapp.utils.setSingleClick
 

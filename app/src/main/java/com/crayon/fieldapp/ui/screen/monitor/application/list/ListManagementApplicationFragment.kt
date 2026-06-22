@@ -9,7 +9,6 @@ import com.crayon.fieldapp.databinding.FragmentListManagementApplicationsBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.ManagementApplicationAdapter
 import com.crayon.fieldapp.utils.Status
-import kotlinx.android.synthetic.main.fragment_list_management_applications.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListManagementApplicationFragment :
@@ -26,12 +25,12 @@ class ListManagementApplicationFragment :
         super.onCreate(savedInstanceState)
         agencyId = requireArguments().get("agencyId").toString()
         status = requireArguments().get("status").toString()
+
+
     }
 
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         val adapter = ManagementApplicationAdapter(
             acceptClickListener = {
                 viewModel.acceptApplicationRequest(agencyId, it.id.toString())
@@ -41,7 +40,7 @@ class ListManagementApplicationFragment :
             }
         )
 
-        rv_application.apply {
+        binding.rvApplication.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -50,16 +49,16 @@ class ListManagementApplicationFragment :
             applications.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapter.submitList(it)
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })

@@ -4,11 +4,11 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.view.View
 import android.widget.AdapterView
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.Gender
@@ -19,12 +19,23 @@ import com.crayon.fieldapp.ui.base.adapter.GenderSPAdapter
 import com.crayon.fieldapp.ui.base.dialog.DatePickerSpinnerDialog
 import com.crayon.fieldapp.ui.base.dialog.getPhoto.GetPhotoDialogFragment
 import com.crayon.fieldapp.ui.screen.info.model.UpdateInfoForm
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_info.*
+import com.crayon.fieldapp.utils.BitmapUtils
+import com.crayon.fieldapp.utils.CityUtils
+import com.crayon.fieldapp.utils.FileManager
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.loadImage
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showMessageDialog
+import com.crayon.fieldapp.utils.toDate
+import com.crayon.fieldapp.utils.toTimeString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
     DatePickerSpinnerDialog.DatePickerDialogListener,
@@ -52,10 +63,10 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             getUserInfo()
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
-        sp_city?.onItemSelectedListener = object :
+        binding.spCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -68,7 +79,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             }
         }
 
-        sp_current_city?.onItemSelectedListener = object :
+        binding.spCurrentCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -81,7 +92,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             }
         }
 
-        sp_district?.onItemSelectedListener = object :
+        binding.spDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -94,7 +105,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             }
         }
 
-        sp_current_district?.onItemSelectedListener = object :
+        binding.spCurrentDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -116,21 +127,21 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
         currentDistrictAdapter = CityAdapter(requireContext(), arrayListOf())
         genderAdapter = GenderSPAdapter(Gender.values(), this@InfoFragment.requireContext())
 
-        sp_gender.isEnabled = false
-        sp_gender.isClickable = false
-        sp_gender.adapter = genderAdapter
+        binding.spGender.isEnabled = false
+        binding.spGender.isClickable = false
+        binding.spGender.adapter = genderAdapter
         // City
         val cities = CityUtils.getAllCity(requireContext())
         cityAdapter.setData(cities)
-        sp_city.setAdapter(cityAdapter)
+        binding.spCity.setAdapter(cityAdapter)
 
         val current_cities = CityUtils.getAllCity(requireContext())
         currentCityAdapter.setData(current_cities)
-        sp_current_city.setAdapter(currentCityAdapter)
+        binding.spCurrentCity.setAdapter(currentCityAdapter)
 
-        sp_city.isEnabled = false
-        sp_city.isClickable = false
-        sp_city?.onItemSelectedListener = object :
+        binding.spCity.isEnabled = false
+        binding.spCity.isClickable = false
+        binding.spCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -142,11 +153,11 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                 cityCode = cityAdapter.getItem(position).id
                 val districts = CityUtils.getAllDistrictOfCity(requireContext(), cityCode!!)
                 districtAdapter.setData(districts)
-                sp_district.setAdapter(districtAdapter)
+                binding.spDistrict.setAdapter(districtAdapter)
             }
         }
 
-        sp_current_city?.onItemSelectedListener = object :
+        binding.spCurrentCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -156,15 +167,16 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                 view: View?, position: Int, id: Long
             ) {
                 current_cityCode = currentCityAdapter.getItem(position).id
-                val current_districts = CityUtils.getAllDistrictOfCity(requireContext(), current_cityCode!!)
+                val current_districts =
+                    CityUtils.getAllDistrictOfCity(requireContext(), current_cityCode!!)
                 currentDistrictAdapter.setData(current_districts)
-                sp_current_district.setAdapter(currentDistrictAdapter)
+                binding.spCurrentDistrict.setAdapter(currentDistrictAdapter)
             }
         }
 
-        sp_district.isEnabled = false
-        sp_district.isClickable = false
-        sp_district?.onItemSelectedListener = object :
+        binding.spDistrict.isEnabled = false
+        binding.spDistrict.isClickable = false
+        binding.spDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -179,9 +191,9 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             }
         }
 
-        sp_current_district.isEnabled = true
-        sp_current_district.isClickable = true
-        sp_current_district?.onItemSelectedListener = object :
+        binding.spCurrentDistrict.isEnabled = true
+        binding.spCurrentDistrict.isClickable = true
+        binding.spCurrentDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -196,46 +208,44 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
             }
         }
 
-        img_id_front?.isEnabled = false
-        img_id_front?.isClickable = false
-        img_id_front?.setSingleClick {
+        binding.imgIdFront.isEnabled = false
+        binding.imgIdFront.isClickable = false
+        binding.imgIdFront.setSingleClick {
             tyeImage = "id_front"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            selectFromCamera()
         }
 
-        img_id_back?.isEnabled = false
-        img_id_back?.isClickable = false
-        img_id_back?.setSingleClick {
+        binding.imgIdBack.isEnabled = false
+        binding.imgIdBack.isClickable = false
+        binding.imgIdBack.setSingleClick {
             tyeImage = "id_back"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            selectFromCamera()
         }
 
-        txt_birth_day?.setSingleClick {
+        binding.txtBirthDay.setSingleClick {
             val datepicker = DatePickerSpinnerDialog()
             datepicker.setListener(this)
             datepicker.show(childFragmentManager, datepicker.getTag())
         }
 
-        imb_ic_filter?.setSingleClick {
-            val firstName = edt_first_name.text.toString().trim()
-            val lastName = edt_last_name.text.toString().trim()
-            val email = edt_email.text.toString().trim()
-            val gender = genderAdapter.getItem(sp_gender.selectedItemPosition).value
+        binding.imbIcFilter.setSingleClick {
+            val firstName = binding.edtFirstName.text.toString().trim()
+            val lastName = binding.edtLastName.text.toString().trim()
+            val email = binding.edtEmail.text.toString().trim()
+            val gender = genderAdapter.getItem(binding.spGender.selectedItemPosition).value
             val birthDate = calendar.time.toTimeString("yyyy-MM-dd").toString()
-            val phone = edt_phone.text.toString().trim()
-            val id = edt_id.text.toString().trim()
-            val height = edt_height.text.toString().trim()
-            val weight = edt_weight.text.toString().trim()
-            val city = cityAdapter.getItem(sp_city.selectedItemPosition).id
-            val current_city = currentCityAdapter.getItem(sp_current_city.selectedItemPosition).id
-            val district = districtAdapter.getItem(sp_district.selectedItemPosition).id
-            val current_district = currentDistrictAdapter.getItem(sp_current_district.selectedItemPosition).id
-            val address = edt_address.text.toString()
-            val current_address = edt_current_address.text.toString()
+            val phone = binding.edtPhone.text.toString().trim()
+            val id = binding.edtId.text.toString().trim()
+            val height = binding.edtHeight.text.toString().trim()
+            val weight = binding.edtWeight.text.toString().trim()
+            val city = cityAdapter.getItem(binding.spCity.selectedItemPosition).id
+            val current_city =
+                currentCityAdapter.getItem(binding.spCurrentCity.selectedItemPosition).id
+            val district = districtAdapter.getItem(binding.spDistrict.selectedItemPosition).id
+            val current_district =
+                currentDistrictAdapter.getItem(binding.spCurrentDistrict.selectedItemPosition).id
+            val address = binding.edtAddress.text.toString()
+            val current_address = binding.edtCurrentAddress.text.toString()
 
             val userForm = UpdateInfoForm(
                 firstName = firstName,
@@ -266,48 +276,52 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
 
         viewModel.apply {
             user.observe(viewLifecycleOwner, Observer { userInfo ->
-                val cityCode = userInfo.profile!!.provinceCode?: "5"
-                val currentCityCode = userInfo.profile!!.temporary_province_code?: "5"
-                val currentDistrictCode = userInfo.profile!!.temporary_district_code?: "136"
-                val districtCode = userInfo.profile!!.districtCode?: "136"
+                val cityCode = userInfo.profile!!.provinceCode ?: "5"
+                val currentCityCode = userInfo.profile!!.temporary_province_code ?: "5"
+                val currentDistrictCode = userInfo.profile!!.temporary_district_code ?: "136"
+                val districtCode = userInfo.profile!!.districtCode ?: "136"
                 calendar.time = userInfo.profile!!.birthDate.toString().toDate("yyyy-MM-dd'T'HH:mm")
 
                 var current_city = cityAdapter.getPositionByCode(cityCode.toString())
                 if (current_city != -1) {
-                    sp_city.setSelection(current_city)
+                    binding.spCity.setSelection(current_city)
                 }
                 val districts = CityUtils.getAllDistrictOfCity(requireContext(), cityCode!!)
                 districtAdapter.setData(districts)
-                sp_district.setAdapter(districtAdapter)
+                binding.spDistrict.setAdapter(districtAdapter)
                 var current_dist = districtAdapter.getPositionByCode(districtCode.toString())
                 if (current_dist != -1) {
-                    Handler().postDelayed({
-                        sp_district?.setSelection(current_dist)
-                    }, 1000)
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                        delay(1000)
+                        binding.spDistrict.setSelection(current_dist)
+                    }
                 }
 
 
                 var temp_city = currentCityAdapter.getPositionByCode(currentCityCode.toString())
                 if (temp_city != -1) {
-                    sp_current_city.setSelection(temp_city)
+                    binding.spCurrentCity.setSelection(temp_city)
                 }
-                val temp_districts = CityUtils.getAllDistrictOfCity(requireContext(), currentCityCode!!)
+                val temp_districts =
+                    CityUtils.getAllDistrictOfCity(requireContext(), currentCityCode!!)
                 currentDistrictAdapter.setData(temp_districts)
-                sp_current_district.setAdapter(currentDistrictAdapter)
-                var temp_dist = currentDistrictAdapter.getPositionByCode(currentDistrictCode.toString())
+                binding.spCurrentDistrict.setAdapter(currentDistrictAdapter)
+                var temp_dist =
+                    currentDistrictAdapter.getPositionByCode(currentDistrictCode.toString())
                 if (temp_dist != -1) {
-                    Handler().postDelayed({
-                        sp_current_district?.setSelection(temp_dist)
-                    }, 1000)
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                        delay(1000)
+                        binding.spCurrentDistrict.setSelection(temp_dist)
+                    }
                 }
 
-                img_id_front.loadImage(
+                binding.imgIdFront.loadImage(
                     imageUrl = userInfo.profile.identificationImageFrontUrl,
                     centerCrop = true,
                     signatureKey = userInfo.updatedAt
                 )
 
-                img_id_back.loadImage(
+                binding.imgIdBack.loadImage(
                     imageUrl = userInfo.profile.identificationImageBackUrl,
                     centerCrop = true,
                     signatureKey = userInfo.updatedAt
@@ -319,6 +333,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         if (tyeImage.equals("id_front")) {
@@ -328,6 +343,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                         }
 
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
@@ -339,10 +355,12 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         requireContext().showMessageDialog(title = "Cập nhật thông tin cá nhân thành công")
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
@@ -356,7 +374,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                 val file = File(result)
                 when (tyeImage) {
                     "id_front" -> {
-                        img_id_front.loadImage(
+                        binding.imgIdFront.loadImage(
                             imageUrl = Uri.fromFile(file).path,
                             centerCrop = true
                         )
@@ -366,8 +384,9 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                             viewModel.updateIdFront(avatar)
                         }
                     }
+
                     "id_back" -> {
-                        img_id_back.loadImage(
+                        binding.imgIdBack.loadImage(
                             imageUrl = Uri.fromFile(file).path,
                             centerCrop = true
                         )
@@ -395,7 +414,7 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                     )
                     when (tyeImage) {
                         "id_front" -> {
-                            img_id_front.loadImage(
+                            binding.imgIdFront.loadImage(
                                 imageUrl = Uri.fromFile(file).path,
                                 centerCrop = true
                             )
@@ -405,8 +424,9 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
                                 viewModel.updateIdFront(avatar)
                             }
                         }
+
                         "id_back" -> {
-                            img_id_back.loadImage(
+                            binding.imgIdBack.loadImage(
                                 imageUrl = Uri.fromFile(file).path,
                                 centerCrop = true
                             )
@@ -450,6 +470,6 @@ class InfoFragment : BaseFragment<FragmentInfoBinding, InfoViewModel>(),
     private fun updateBirthDay() {
         val myFormat = "dd/MM/yyyy"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
-        txt_birth_day.text = sdf.format(calendar.time).toString()
+        binding.txtBirthDay.text = sdf.format(calendar.time).toString()
     }
 }

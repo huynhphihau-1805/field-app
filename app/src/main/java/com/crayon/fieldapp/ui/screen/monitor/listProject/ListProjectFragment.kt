@@ -14,10 +14,8 @@ import com.crayon.fieldapp.ui.base.adapter.ProjectAdapter
 import com.crayon.fieldapp.utils.MStringUtils
 import com.crayon.fieldapp.utils.Status
 import com.example.moviedb.utils.getQueryTextChangeStateFlow
-import kotlinx.android.synthetic.main.fragment_list_project.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -44,15 +42,14 @@ class ListProjectFragment(private var mode: Int? = FROM_PROJECT_MODE) :
         taskType = requireArguments().getInt("type")
     }
 
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        sv_project.queryHint = "Tìm kiếm theo tên dự án"
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.svProject.queryHint = "Tìm kiếm theo tên dự án"
         val adapter = ProjectAdapter(
             itemClickListener = { toProjectDetail(it) }
         )
 
-        recycler_view.apply {
+        binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -61,17 +58,17 @@ class ListProjectFragment(private var mode: Int? = FROM_PROJECT_MODE) :
             projects.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { list ->
                             val sort = list.sortedByDescending { it.createdAt }
                             adapter.submitList(sort)
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -139,7 +136,7 @@ class ListProjectFragment(private var mode: Int? = FROM_PROJECT_MODE) :
 
     private fun setUpSearchStateFlow() {
         GlobalScope.launch {
-            sv_project.getQueryTextChangeStateFlow()
+            binding.svProject.getQueryTextChangeStateFlow()
                 .debounce(1000)
                 .filter { query ->
                     if (query.isEmpty()) {
@@ -151,7 +148,7 @@ class ListProjectFragment(private var mode: Int? = FROM_PROJECT_MODE) :
                 .distinctUntilChanged()
                 .collect { result ->
                     withContext(Dispatchers.Main) {
-                        sv_project.clearFocus()
+                        binding.svProject.clearFocus()
                         if (result.isNullOrBlank()) {
                             viewModel.getProjects(agencyId, status, type = taskType)
                         } else {

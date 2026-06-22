@@ -4,18 +4,17 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import com.crayon.fieldapp.R
+import com.crayon.fieldapp.databinding.FragmentDetailStoreBinding
+import com.crayon.fieldapp.ui.base.BaseFragment
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.setSingleClick
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentDetailStoreBinding
-import com.crayon.fieldapp.ui.base.BaseFragment
-import com.crayon.fieldapp.utils.Status
-import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_detail_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailStoreFragment : BaseFragment<FragmentDetailStoreBinding, DetailStoreViewModel>(),
@@ -46,7 +45,7 @@ class DetailStoreFragment : BaseFragment<FragmentDetailStoreBinding, DetailStore
             fetchDetailStore(agencyId, storeId)
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -64,6 +63,7 @@ class DetailStoreFragment : BaseFragment<FragmentDetailStoreBinding, DetailStore
                             mapFragment.getMapAsync(this@DetailStoreFragment)
                         }
                     }
+
                     Status.LOADING -> {
 
                     }
@@ -74,8 +74,8 @@ class DetailStoreFragment : BaseFragment<FragmentDetailStoreBinding, DetailStore
 
     }
 
-    override fun onMapReady(p0: GoogleMap?) {
-        p0?.let { map ->
+    override fun onMapReady(p0: GoogleMap) {
+        p0.let { map ->
             gmap = p0
             gmap?.let { map ->
                 location?.let {

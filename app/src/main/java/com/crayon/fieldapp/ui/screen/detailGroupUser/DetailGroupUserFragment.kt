@@ -7,16 +7,14 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentDetailUserBinding
+import com.crayon.fieldapp.databinding.FragmentDetailGroupUserBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.MemberAdapter
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_detail_group_user.*
-import kotlinx.android.synthetic.main.fragment_detail_store.imb_ic_back
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailGroupUserFragment :
-    BaseFragment<FragmentDetailUserBinding, DetailGroupUserViewModel>() {
+    BaseFragment<FragmentDetailGroupUserBinding, DetailGroupUserViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_detail_group_user
 
@@ -36,21 +34,17 @@ class DetailGroupUserFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        tv_title.text = groupName
+        binding.tvTitle.text = groupName
 
         val adapter = MemberAdapter(
             itemClickListener = { toUserDetail(it.id.toString()) }
         )
 
-        rv_user.apply {
+        binding.rvUser.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -63,6 +57,7 @@ class DetailGroupUserFragment :
             })
         }
     }
+
 
     private fun toUserDetail(id: String) {
         val bundel = bundleOf("userId" to id)

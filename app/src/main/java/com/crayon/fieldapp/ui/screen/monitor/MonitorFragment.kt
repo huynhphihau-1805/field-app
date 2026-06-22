@@ -16,7 +16,6 @@ import com.crayon.fieldapp.ui.base.dialog.selectAgency.SelectAgencyDialog
 import com.crayon.fieldapp.ui.widgets.GridDividerItemDecoration
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_monitor.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>(),
@@ -45,11 +44,11 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val agencyDialog = SelectAgencyDialog()
             agencyDialog.setListener(this@MonitorFragment)
             val bundle = Bundle()
@@ -64,17 +63,18 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
                     it?.let {
                         when (it.status) {
                             Status.LOADING -> {
-                                pb_loading.visibility = View.VISIBLE
+                                binding.pbLoading.visibility = View.VISIBLE
                             }
+
                             Status.SUCCESS -> {
-                                pb_loading.visibility = View.GONE
+                                binding.pbLoading.visibility = View.GONE
                                 it.data?.let { items ->
                                     mListAgency.clear()
                                     mListAgency.addAll(items)
                                     if (items.size == 0) {
                                         findNavController().navigateUp()
                                     } else if (items.size == 1) {
-                                        tv_sub_title.text = items.get(0).agency.name
+                                        binding.tvSubTitle.text = items.get(0).agency.name
                                         agneycId = items.get(0).agency.id
                                     } else {
                                         var listAgency = ArrayList<RoleResponse>()
@@ -89,8 +89,9 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
                                 }
 
                             }
+
                             Status.ERROR -> {
-                                pb_loading.visibility = View.GONE
+                                binding.pbLoading.visibility = View.GONE
                             }
                         }
                     }
@@ -193,14 +194,14 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
 
         adapter = MenuRVAdapter(menu, requireContext(), this)
         mLayoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
-        rv_menu.setLayoutManager(mLayoutManager)
-        rv_menu.addItemDecoration(
+        binding.rvMenu.setLayoutManager(mLayoutManager)
+        binding.rvMenu.addItemDecoration(
             GridDividerItemDecoration(
                 requireContext(),
                 R.drawable.line_divider_white
             )
         )
-        rv_menu.adapter = adapter
+        binding.rvMenu.adapter = adapter
     }
 
     companion object {
@@ -226,60 +227,70 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
                     bundle
                 )
             }
+
             UPDATE_STATUS -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageUpdateStatusFragment,
                     bundle
                 )
             }
+
             REPORT_COMPITETOR -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageReportCompetitorFragment,
                     bundle
                 )
             }
+
             TRACKING -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageReportTrackingFragment,
                     bundle
                 )
             }
+
             CHANGE_GIFT -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageChangeGiftFragment,
                     bundle
                 )
             }
+
             REPORT_SALES -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageReportSalesFragment,
                     bundle
                 )
             }
+
             EMPLOYEE_AGENCY -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageEmployeeFragment,
                     bundle
                 )
             }
+
             APPLICATION -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageApplicationFragment,
                     bundle
                 )
             }
+
             NOTIFICAITON -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageNotificationFragment,
                     bundle
                 )
             }
+
             STORE -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageStoreFragment,
                     bundle
                 )
             }
+
             PROJECT -> {
                 findNavController().navigate(
                     R.id.action_monitorFragment_to_manageProjectFragment,
@@ -291,7 +302,7 @@ class MonitorFragment : BaseFragment<FragmentMonitorBinding, MonitorViewModel>()
 
     override fun onSelectAgencyItemClicked(role: RoleResponse) {
         this.agneycId = role.agency.id
-        tv_sub_title.text = role.agency.name
+        binding.tvSubTitle.text = role.agency.name
     }
 
 }

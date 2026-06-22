@@ -1,5 +1,7 @@
 package com.crayon.fieldapp.ui.screen.home
 
+import android.util.Log
+import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
@@ -8,6 +10,7 @@ import com.crayon.fieldapp.AppDispatchers
 import com.crayon.fieldapp.data.local.dao.ProductDao
 import com.crayon.fieldapp.data.remote.ApiService
 import com.crayon.fieldapp.data.remote.response.JobResponse
+import com.crayon.fieldapp.data.remote.response.RoleOfAgency
 import com.crayon.fieldapp.data.remote.response.RoleResponse
 import com.crayon.fieldapp.data.repository.JobRepository
 import com.crayon.fieldapp.data.repository.RoleRepository
@@ -29,7 +32,13 @@ class HomeViewModel(
     // FOR DATA
     private val _jobs = MediatorLiveData<Event<Resource<List<JobResponse>>>>()
     val jobs: LiveData<Event<Resource<List<JobResponse>>>> get() = _jobs
+    private val _isShowMonitorTab = MediatorLiveData<Boolean>()
+    val isShowMonitorTab: LiveData<Boolean> get() = _isShowMonitorTab
 
+
+    fun setIsShowMonitorTab(isShow: Boolean){
+        _isShowMonitorTab.value = isShow
+    }
 
     fun getTodayJob(statusTime: String, endTime: String, skip: Int) = viewModelScope.launch(dispatchers.main) {
         viewModelScope.launch {

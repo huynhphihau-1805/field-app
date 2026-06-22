@@ -8,6 +8,7 @@ import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.remote.response.TaskResponse
 import com.crayon.fieldapp.data.remote.response.TaskType
 import com.crayon.fieldapp.databinding.FragmentListGroupBinding
+import com.crayon.fieldapp.databinding.FragmentListImageBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaData
@@ -16,10 +17,9 @@ import com.crayon.fieldapp.ui.screen.videoDialog.VideoDialog
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.showConfirmDialog
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_list_image.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class ListImageFragment : BaseFragment<FragmentListGroupBinding, ListImageViewModel>() {
+class ListImageFragment : BaseFragment<FragmentListImageBinding, ListImageViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_list_image
     override val viewModel: ListImageViewModel by viewModel()
@@ -107,14 +107,9 @@ class ListImageFragment : BaseFragment<FragmentListGroupBinding, ListImageViewMo
             listUrl
         )
 
-        rv_images.setLayoutManager(GridLayoutManager(requireContext(), 2))
-        rv_images.setHasFixedSize(true)
-        rv_images.setAdapter(mediaAdapter)
-
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+        binding.rvImages.setLayoutManager(GridLayoutManager(requireContext(), 2))
+        binding.rvImages.setHasFixedSize(true)
+        binding.rvImages.setAdapter(mediaAdapter)
 
         viewModel.apply {
             isRemoveTask.observe(viewLifecycleOwner, Observer {
@@ -133,5 +128,6 @@ class ListImageFragment : BaseFragment<FragmentListGroupBinding, ListImageViewMo
                 }
             })
         }
+
     }
 }

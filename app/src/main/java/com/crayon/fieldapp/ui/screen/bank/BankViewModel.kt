@@ -15,9 +15,9 @@ import com.crayon.fieldapp.ui.base.BaseViewModel
 import com.crayon.fieldapp.utils.CityUtils
 import com.crayon.fieldapp.utils.Resource
 import com.crayon.fieldapp.utils.Status
+import com.example.moviedb.utils.toRequestBody
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.RequestBody.Companion.toRequestBody
 
 class BankViewModel(
     private val userRepository: UserRepository, private val context: Context,

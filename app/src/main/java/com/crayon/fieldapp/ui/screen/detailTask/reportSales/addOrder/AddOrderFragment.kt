@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.SearchView
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.crayon.fieldapp.R
@@ -22,10 +23,7 @@ import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.example.moviedb.utils.getQueryTextChangeStateFlow
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_add_order.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -96,13 +94,13 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (_orderResponse != null) {
-            tv_title?.text = "Cập nhật đơn hàng"
+            binding.tvTitle.text = "Cập nhật đơn hàng"
         } else {
-            tv_title?.text = "Tạo đơn hàng"
+            binding.tvTitle.text = "Tạo đơn hàng"
         }
 
-        cb_select_all?.setOnClickListener {
-            val isChecked = cb_select_all.isChecked
+        binding.cbSelectAll.setOnClickListener {
+            val isChecked = binding.cbSelectAll.isChecked
             if (isChecked) {
                 mProductAdapter.selectAll()
             } else {
@@ -110,11 +108,11 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
             }
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val products = mProductAdapter.getAllItemSelected()
             if (products.size == 0) {
                 requireContext().showMessageDialog(message = "Vui lòng chọn sản phẩm") {}
@@ -134,14 +132,10 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
 
             }
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         setUpSearchStateFlow()
 
-        rv_product?.apply {
+        binding.rvProduct.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mProductAdapter
         }
@@ -150,10 +144,11 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             if (_orderResponse != null) {
                                 it.forEach { mProjectOfProduct ->
@@ -174,8 +169,9 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -185,10 +181,11 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { mOrder ->
                             requireContext().showMessageDialog(message = "Tạo đơn hàng thành công") {
                                 findNavController().previousBackStackEntry?.savedStateHandle?.set(
@@ -199,8 +196,9 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -211,10 +209,11 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let { mOrder ->
                             requireContext().showMessageDialog(message = "Cập nhật đơn hàng thành công") {
                                 findNavController().previousBackStackEntry?.savedStateHandle?.set(
@@ -225,25 +224,29 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
     }
 
+
     private fun setUpSearchStateFlow() {
-        val iconSearchClose = sv_product?.findViewById<ImageView>(R.id.search_close_btn)
+        val iconSearchClose =
+            binding.svProduct.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
         iconSearchClose?.setSingleClick {
-            val et = sv_product?.findViewById(com.crayon.fieldapp.R.id.search_src_text) as EditText
+            val et =
+                binding.svProduct.findViewById(androidx.appcompat.R.id.search_src_text) as EditText
             et.setText("")
-            sv_product?.setQuery("", false)
+            binding.svProduct.setQuery("", false)
             mProductAdapter.refresh()
             Utils.hideKeyboard(requireActivity())
         }
 
-        sv_product?.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
+        binding.svProduct.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 mProductAdapter.getFilter().filter(query.toString())
@@ -256,8 +259,8 @@ class AddOrderFragment : BaseFragment<FragmentAddOrderBinding, AddOrderViewModel
 
         })
 
-        GlobalScope.launch {
-            sv_product?.let {
+        viewLifecycleOwner.lifecycleScope.launch {
+            binding.svProduct.let {
                 it.getQueryTextChangeStateFlow()
                     .debounce(1000)
                     .filter { query ->

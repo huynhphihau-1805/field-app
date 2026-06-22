@@ -6,14 +6,17 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.BuildConfig
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.databinding.FragmentProfileBindingImpl
+import com.crayon.fieldapp.databinding.FragmentProfileBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.dialog.LoginQrCodeDialog
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_profile.*
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.loadImage
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showConfirmDialog
+import com.crayon.fieldapp.utils.showMessageDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class ProfileFragment : BaseFragment<FragmentProfileBindingImpl, ProfileViewModel>() {
+class ProfileFragment : BaseFragment<FragmentProfileBinding, ProfileViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_profile
 
@@ -37,11 +40,13 @@ class ProfileFragment : BaseFragment<FragmentProfileBindingImpl, ProfileViewMode
                     when (it.status) {
                         Status.LOADING -> {
                         }
+
                         Status.SUCCESS -> {
                             it.data?.let {
                                 context?.showMessageDialog(it.message)
                             }
                         }
+
                         Status.ERROR -> {
                         }
                     }
@@ -49,9 +54,9 @@ class ProfileFragment : BaseFragment<FragmentProfileBindingImpl, ProfileViewMode
             })
 
             user.observe(viewLifecycleOwner, Observer { userInfo ->
-                tv_username.text = userInfo.lastName + " " + userInfo.firstName
+                binding.tvUsername.text = userInfo.lastName + " " + userInfo.firstName
 
-                img_avatar.loadImage(
+                binding.imgAvatar.loadImage(
                     imageUrl = userInfo.avatarUrl,
                     centerCrop = true,
                     circleCrop = true,
@@ -59,7 +64,7 @@ class ProfileFragment : BaseFragment<FragmentProfileBindingImpl, ProfileViewMode
                     fitCenter = true
                 )
 
-                img_ic_avatar.loadImage(
+                binding.imgIcAvatar.loadImage(
                     imageUrl = userInfo.avatarUrl,
                     centerCrop = true,
                     circleCrop = true,
@@ -70,44 +75,44 @@ class ProfileFragment : BaseFragment<FragmentProfileBindingImpl, ProfileViewMode
 
         }
 
-        rl_avatar.setSingleClick {
+        binding.rlAvatar.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_avatar)
         }
 
-        rl_contact_info.setSingleClick {
+        binding.rlContactInfo.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_infoFragment)
         }
 
-        rl_bank.setSingleClick {
+        binding.rlBank.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_bankFragment)
         }
 
-        rl_application.setSingleClick {
+        binding.rlApplication.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_applicationFragment)
         }
 
-        rl_about_terms.setSingleClick {
+        binding.rlAboutTerms.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_termFragment)
         }
 
-        rl_about_privacy.setSingleClick {
+        binding.rlAboutPrivacy.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_privacyFragment)
         }
 
-        rl_contact.setSingleClick {
+        binding.rlContact.setSingleClick {
             findNavController().navigate(R.id.action_profile_to_contactFragment)
         }
 
-        rl_login_qrcod.setSingleClick {
+        binding.rlLoginQrcod.setSingleClick {
             val qrCodeDialog = LoginQrCodeDialog({
                 viewModel.loginByQrCode(it.replace("\"", ""))
             })
             qrCodeDialog.show(childFragmentManager, qrCodeDialog.tag)
         }
 
-        tv_version.text = BuildConfig.VERSION_NAME
+        binding.tvVersion.text = BuildConfig.VERSION_NAME
 
-        tv_logout.setOnClickListener {
+        binding.tvLogout.setOnClickListener {
             requireContext().showConfirmDialog(
                 title = "Bạn có muốn đăng xuất không?",
                 textPositive = "Có",

@@ -12,7 +12,6 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailProject.addStore.adapter.AddMemberRVAdapter
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showDialog
-import kotlinx.android.synthetic.main.fragment_add_member_project.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class AddMemberProjectFragment :
@@ -35,11 +34,11 @@ class AddMemberProjectFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_choose?.setSingleClick {
+        binding.btnChoose.setSingleClick {
             adapterMembers?.let {
                 viewModel.addMembersToProject(
                     agencyId,
@@ -49,7 +48,7 @@ class AddMemberProjectFragment :
             }
         }
 
-        cb_select_all?.setOnCheckedChangeListener { compoundButton, isChecked ->
+        binding.cbSelectAll.setOnCheckedChangeListener { compoundButton, isChecked ->
             adapterMembers?.selectAllItems(isChecked)
         }
 
@@ -65,7 +64,7 @@ class AddMemberProjectFragment :
             itemClickListener = { toUserDetail(it.id) }
         )
 
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterMembers
         }

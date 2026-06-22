@@ -7,14 +7,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.model.ProjectStatus
-import com.crayon.fieldapp.databinding.FragmentManageReportCompetitorBinding
 import com.crayon.fieldapp.databinding.FragmentManageReportTrackingBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.listProject.ListProjectFragment
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.fragment_manage_update_status.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageReportTrackingFragment :
@@ -47,7 +45,7 @@ class ManageReportTrackingFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -73,6 +71,6 @@ class ManageReportTrackingFragment :
             offscreenPageLimit = 3
             adapter = mAdapter
         }
-        tabLayout!!.setupWithViewPager(viewPager)
+        tabLayout.setupWithViewPager(viewPager)
     }
 }

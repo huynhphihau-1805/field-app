@@ -12,7 +12,6 @@ import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.store.listGroup.ListGroupFragment
 import com.crayon.fieldapp.ui.screen.monitor.store.listStore.ListStoreFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_manage_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageStoreFragment :
@@ -45,7 +44,7 @@ class ManageStoreFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -65,6 +64,6 @@ class ManageStoreFragment :
             offscreenPageLimit = 2
             adapter = mAdapter
         }
-        tabLayout!!.setupWithViewPager(viewPager)
+        tabLayout.setupWithViewPager(viewPager)
     }
 }

@@ -11,10 +11,13 @@ import com.crayon.fieldapp.data.remote.response.JobResponse
 import com.crayon.fieldapp.databinding.FragmentJobProjectBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailProject.addStore.adapter.ManageJobRVAdapter
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_job_project.*
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.getCurrentDateTime
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showConfirmDialog
+import com.crayon.fieldapp.utils.toTimeString
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.*
+import java.util.Calendar
 
 class ManageJobProjectFragment :
     BaseFragment<FragmentJobProjectBinding, ManageJobProjectViewModel>(),
@@ -42,20 +45,17 @@ class ManageJobProjectFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        calendar.setOnDateChangeListener(this)
-        tv_title.text = storeName
-    }
+        binding.calendar.setOnDateChangeListener(this)
+        binding.tvTitle.text = storeName
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+        binding.txtDate.text =
+            "Ngày " + Calendar.getInstance().timeInMillis.toTimeString("dd/MM/yyyy")
 
-        txt_date.text = "Ngày " + Calendar.getInstance().timeInMillis.toTimeString("dd/MM/yyyy")
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        fab_create?.setSingleClick {
+        binding.fabCreate.setSingleClick {
             toCreateJob()
         }
 
@@ -76,7 +76,7 @@ class ManageJobProjectFragment :
             }
         )
 
-        rv_job.apply {
+        binding.rvJob.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = jobAdapter
         }
@@ -85,16 +85,18 @@ class ManageJobProjectFragment :
             jobs.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             jobAdapter?.addAll(it as ArrayList<JobResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })
@@ -114,12 +116,14 @@ class ManageJobProjectFragment :
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         jobId?.let {
                             jobAdapter?.removeJob(it)
                         }
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
@@ -127,6 +131,7 @@ class ManageJobProjectFragment :
             })
         }
     }
+
 
     private fun toJobDetail(id: String) {
         val bundel = bundleOf("agencyId" to agencyId, "jobId" to id)
@@ -150,7 +155,7 @@ class ManageJobProjectFragment :
         calendar.set(Calendar.HOUR, 0)
         calendar.set(Calendar.MINUTE, 0)
 
-        txt_date.text = "Ngày " + calendar.timeInMillis.toTimeString("dd/MM/yyyy")
+        binding.txtDate.text = "Ngày " + calendar.timeInMillis.toTimeString("dd/MM/yyyy")
         val startDate = calendar.timeInMillis.toTimeString("yyyy-MM-dd") + "T00:00:00.000Z"
         val endDate = calendar.timeInMillis.toTimeString("yyyy-MM-dd") + "T23:59:00.000Z"
         viewModel.getJobAtStore(

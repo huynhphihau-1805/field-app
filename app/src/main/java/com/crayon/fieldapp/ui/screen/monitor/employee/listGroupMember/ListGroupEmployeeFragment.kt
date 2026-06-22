@@ -10,7 +10,6 @@ import com.crayon.fieldapp.data.model.GroupUser
 import com.crayon.fieldapp.databinding.FragmentListGroupEmployeeBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.GroupUserAdapter
-import kotlinx.android.synthetic.main.fragment_list_group_employee.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListGroupEmployeeFragment :
@@ -34,7 +33,7 @@ class ListGroupEmployeeFragment :
             itemClickListener = { toUserDetail(it) }
         )
 
-        rv_group.apply {
+        binding.rvGroup.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }

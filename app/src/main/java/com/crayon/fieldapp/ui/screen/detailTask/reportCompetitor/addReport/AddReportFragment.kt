@@ -3,7 +3,10 @@ package com.crayon.fieldapp.ui.screen.detailTask.reportCompetitor.addReport
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -19,8 +22,12 @@ import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaData
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.step3.adapter.UploadMediaAdapter
 import com.crayon.fieldapp.ui.screen.imageDialog.ImageDialog
 import com.crayon.fieldapp.ui.screen.videoDialog.VideoDialog
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_add_report.*
+import com.crayon.fieldapp.utils.FileManager
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.Utils
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showConfirmDialog
+import com.crayon.fieldapp.utils.showMessageDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -33,6 +40,7 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
 
     override val layoutId: Int = R.layout.fragment_add_report
     override val viewModel: AddReportViewModel by viewModel()
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
 
     private var taskId: String? = null
     private lateinit var updateImageAdapter: UploadMediaAdapter
@@ -70,34 +78,44 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
                     )
                 }
             )
+
+        galleryLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data = result.data
+                    val selectedImageUri = data?.data
+                    val path = FileManager.getPath(requireContext(), selectedImageUri)
+                    showImage(path)
+                }
+            }
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
             ?.observe(viewLifecycleOwner, Observer { result ->
                 showImage(result)
             })
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             Utils.hideKeyboard(requireActivity())
-            val brandName = edt_brand_name.text.toString().trim()
-            if (brandName.isNullOrBlank()) {
-                edt_brand_name?.setError("Vui lòng nhập tên nhãn hàng")
+            val brandName = binding.edtBrandName.text.toString().trim()
+            if (brandName.isBlank()) {
+                binding.edtBrandName.setError("Vui lòng nhập tên nhãn hàng")
                 return@setSingleClick
             }
 
-            val type = sp_activity?.selectedItem.toString().trim()
-            if (type.isNullOrBlank()) {
-                edt_brand_name?.setError("Vui lòng nhập loại hoạt động")
+            val type = binding.spActivity.selectedItem.toString().trim()
+            if (type.isBlank()) {
+                binding.edtBrandName.setError("Vui lòng nhập loại hoạt động")
                 return@setSingleClick
             }
-            val note = edt_note.text.toString().trim()
+            val note = binding.edtNote.text.toString().trim()
 
 
             if (updateImageAdapter.itemCount > 4) {
@@ -119,17 +137,15 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
             }
         }
 
-        btn_camera?.setSingleClick {
+        binding.btnCamera.setSingleClick {
             if (updateImageAdapter.itemCount >= 3) {
                 context?.showMessageDialog("Bạn chỉ được chụp tối đa 3 tấm")
             } else {
-                val dialog = GetPhotoDialogFragment()
-                dialog.setListener(this)
-                dialog.show(childFragmentManager, dialog.tag)
+                openCamera()
             }
         }
 
-        btn_video?.setSingleClick {
+        binding.btnVideo.setSingleClick {
             openVideoCamera()
         }
 
@@ -137,10 +153,11 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             context?.showMessageDialog(message = it.message) {
                                 findNavController().previousBackStackEntry?.savedStateHandle?.set(
@@ -151,29 +168,17 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
 
-        rv_images?.apply {
+        binding.rvImages?.apply {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             this.adapter = updateImageAdapter
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                CODE_REQUEST_GALLERY -> {
-                    var selectedImageUri = data!!.data
-                    val path = FileManager.getPath(requireContext(), selectedImageUri)
-                    showImage(path)
-                }
-            }
         }
     }
 
@@ -199,13 +204,9 @@ class AddReportFragment : BaseFragment<FragmentAddReportBinding, AddReportViewMo
         if (updateImageAdapter.itemCount >= 3) {
             context?.showMessageDialog("Bạn chỉ được chụp tối đa 3 video")
         } else {
-            val intent = Intent()
-            intent.type = "image/*"
-            intent.action = Intent.ACTION_GET_CONTENT
-            startActivityForResult(
-                Intent.createChooser(intent, "Select Picture"),
-                CODE_REQUEST_GALLERY
-            )
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            val chooserIntent = Intent.createChooser(intent, "Select Picture")
+            galleryLauncher.launch(chooserIntent)
         }
 
     }

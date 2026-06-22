@@ -1,26 +1,18 @@
-package com.crayon.fieldapp.ui.screen.detailTask.base
+package com.crayon.fieldapp.ui.screen.detailTask.attendance
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Rect
 import android.net.Uri
-import android.text.TextPaint
 import android.text.TextUtils
-import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.crayon.fieldapp.AppDispatchers
 import com.crayon.fieldapp.data.local.pref.PrefHelper
-import com.crayon.fieldapp.data.remote.request.UpdateProductFeedbackRequest
 import com.crayon.fieldapp.data.remote.response.AttendanceStatus
 import com.crayon.fieldapp.data.remote.response.GetMessageResponse
 import com.crayon.fieldapp.data.remote.response.TaskResponse
-import com.crayon.fieldapp.data.remote.response.TaskType
 import com.crayon.fieldapp.data.repository.TaskRepository
 import com.crayon.fieldapp.ui.base.BaseViewModel
 import com.crayon.fieldapp.utils.BitmapUtils
@@ -44,7 +36,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 
-class DetailTaskViewModel(
+class TaskAttendanceViewModel(
     private val taskRepository: TaskRepository,
     private val dispatchers: AppDispatchers,
     private val context: Context,
@@ -54,14 +46,14 @@ class DetailTaskViewModel(
     private val _task = MediatorLiveData<Event<Resource<TaskResponse>>>()
     val task: LiveData<Event<Resource<TaskResponse>>> get() = _task
 
-    private val _title = MediatorLiveData<String>()
-    val title: LiveData<String> get() = _title
+    private val _isEnableCheckIn = MediatorLiveData<Boolean>(true)
+    val isEnableCheckIn: LiveData<Boolean>  get() = _isEnableCheckIn
 
-    private val _isRecordVideo = MediatorLiveData<Boolean>()
-    val isRecordVideo: LiveData<Boolean> get() = _isRecordVideo
+    private val _isEnableCheckOut = MediatorLiveData<Boolean>(true)
+    val isEnableCheckOut: LiveData<Boolean>  get() = _isEnableCheckOut
 
-    private val _isRecordImage = MediatorLiveData<Boolean>()
-    val isRecordImage: LiveData<Boolean> get() = _isRecordImage
+    private val _subtitle = MediatorLiveData<String>()
+    val subtitle: LiveData<String>  get() = _subtitle
 
     fun getDetailTask(taskId: String) {
         viewModelScope.launch {
@@ -69,66 +61,30 @@ class DetailTaskViewModel(
             try {
                 fetchCurrentLocation()
                 val result = taskRepository.getPicTask(taskId)
+                _task.postValue(Event(Resource.success(result.data)))
                 result.data?.let {
-                    _title.postValue(it.type.name.toString())
-                    when(it.type.id.toString().toInt()){
-                        TaskType.CHECK_LIST.value,
-                        TaskType.VISIT_STORE.value,
-                        TaskType.REPORT_CUSTOMER.value,
-                        TaskType.TIME_KEEPING.value -> {
-                            _isRecordImage.value = true
-                            _isRecordVideo.value = false
-                        }
-                        TaskType.SET_UP.value,
-                        TaskType.UPDATE_STATUS.value,
-                        TaskType.REPORT_COMPITETOR.value,
-                        TaskType.REPORT_DAMAGED.value,
-                        TaskType.CLEAN_UP.value,
-                        TaskType.REPORT_VIOLATION.value,
-                        TaskType.REPORT_END_SHIFT.value,
-                        TaskType.COUNT.value,
-                        TaskType.UPDATE_PRICE.value,
-                        TaskType.COMPLETE_FIX.value -> {
-                            _isRecordImage.value = true
-                            _isRecordVideo.value = true
+                    it.attendances?.let { attendances ->
+                        if (attendances.size == 0) {
+                            _subtitle.postValue("Check In")
+                            _isEnableCheckIn.postValue(true)
+                            _isEnableCheckOut.postValue(false)
+                        } else if (attendances.size == 1 && attendances.get(0).checkOutTime == null) {
+                            _subtitle.postValue("Check Out")
+                            _isEnableCheckIn.postValue(false)
+                            _isEnableCheckOut.postValue(true)
+                        } else {
+                            _subtitle.postValue("Đã chấm công")
+                            _isEnableCheckIn.postValue(false)
+                            _isEnableCheckOut.postValue(false)
                         }
                     }
                 }
-                _task.postValue(Event(Resource.success(result.data)))
+
             } catch (e: Exception) {
                 onLoadFail(e)
             }
         }
     }
-
-    private val _updateProduct = MediatorLiveData<Resource<GetMessageResponse>>()
-    val updateProduct: LiveData<Resource<GetMessageResponse>> get() = _updateProduct
-    private var updateProductSource: LiveData<Resource<GetMessageResponse>> = MutableLiveData()
-    fun updateProductFeedback(
-        task: TaskResponse,
-        products: ArrayList<TaskResponse.Product>,
-        feedback: ArrayList<TaskResponse.Feedback>
-    ) =
-        viewModelScope.launch(dispatchers.main) {
-            _updateProduct.removeSource(updateProductSource)
-            withContext(dispatchers.io) {
-                updateProductSource = taskRepository.updateProductFeedBack(
-                    task.id.toString(),
-                    UpdateProductFeedbackRequest(products = products, feedback = feedback)
-                )
-            }
-            _updateProduct.addSource(updateProductSource) {
-                _updateProduct.value = it
-                if (it.status == Status.ERROR) {
-                    it.message?.let { error ->
-                        viewModelScope?.launch {
-                            onLoadFail(error)
-                        }
-                    }
-                }
-            }
-        }
-
 
     private val _updateTask = MediatorLiveData<Resource<GetMessageResponse>>()
     val updateTask: LiveData<Resource<GetMessageResponse>> get() = _updateTask
@@ -259,6 +215,58 @@ class DetailTaskViewModel(
             }
         }
 
+    private val _updateCheckInOutTask = MediatorLiveData<Resource<GetMessageResponse>>()
+    val updateCheckInOutTask: LiveData<Resource<GetMessageResponse>> get() = _updateCheckInOutTask
+    private var updateCheckInOutTaskSource: LiveData<Resource<GetMessageResponse>> =
+        MutableLiveData()
+
+    fun checkInOut(task: TaskResponse, listUri: ArrayList<String>, note: String? = null) =
+        viewModelScope.launch(dispatchers.main) {
+            val type = getTypeMedia(listUri.get(0))
+            val requestBody1: RequestBody = RequestBody.create(type, File(listUri.get(0)))
+
+            val fileToUpload1: MultipartBody.Part =
+                MultipartBody.Part.createFormData(
+                    "files",
+                    File(listUri.get(0)).getName(),
+                    requestBody1
+                )
+            _updateCheckInOutTask.removeSource(updateCheckInOutTaskSource)
+            withContext(dispatchers.io) {
+                val attendanceStatus = TaskUtils.getStatusAttendances(task)
+                when (attendanceStatus) {
+                    AttendanceStatus.PENDING.value -> {
+                        updateCheckInOutTaskSource = taskRepository.checkIn(
+                            taskId = task.id.toString(),
+                            file = fileToUpload1
+                        )
+                    }
+
+                    AttendanceStatus.PROCESSING.value -> {
+                        updateCheckInOutTaskSource = taskRepository.checkOut(
+                            taskId = task.id.toString(),
+                            file = fileToUpload1
+                        )
+                    }
+
+                    AttendanceStatus.COMPLETED.value -> {
+                        showError(Throwable("Bạn đã chấm công rồi"))
+                        return@withContext
+                    }
+                }
+
+            }
+            _updateCheckInOutTask.addSource(updateCheckInOutTaskSource) {
+                _updateCheckInOutTask.value = it
+                if (it.status == Status.ERROR) {
+                    it.message?.let { error ->
+                        viewModelScope?.launch {
+                            onLoadFail(error)
+                        }
+                    }
+                }
+            }
+        }
 
     var currentLocation: LatLng = pref.getCurrentLocation()
     var storeLocation: LatLng? = null
@@ -318,6 +326,26 @@ class DetailTaskViewModel(
         }
     }
 
+    fun uriToFile(context: Context, uri: Uri): File? {
+        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+        inputStream?.let {
+            val outputFile = File(context.cacheDir, "videoFile.mp4")
+            val outputStream: OutputStream = FileOutputStream(outputFile)
+
+            val buffer = ByteArray(1024)
+            var bytesRead: Int
+            while (it.read(buffer).also { bytesRead = it } != -1) {
+                outputStream.write(buffer, 0, bytesRead)
+            }
+
+            it.close()
+            outputStream.close()
+            return outputFile
+        }
+        return null
+    }
+
+
     private val _removeImage = MediatorLiveData<Resource<GetMessageResponse>>()
     val isRemoveTask: LiveData<Resource<GetMessageResponse>> get() = _removeImage
     private var removeImageSource: LiveData<Resource<GetMessageResponse>> = MutableLiveData()
@@ -374,21 +402,6 @@ class DetailTaskViewModel(
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
         return file
-    }
-
-    fun createFile(
-        url: String,
-        quality: Int,
-    ): File? {
-        if (!url.contains("mp4")) {
-            return BitmapUtils.createImageFileToUpload(
-                context,
-                url,
-                quality
-            )
-        } else {
-            return File(url)
-        }
     }
 
 }

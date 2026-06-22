@@ -18,7 +18,6 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.job.request.adapter.JobRequest
 import com.crayon.fieldapp.ui.screen.job.request.adapter.JobsRequestRVAdapter
 import com.crayon.fieldapp.utils.Status
-import kotlinx.android.synthetic.main.fragment_list_job_request.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListJobRequestFragment :
@@ -28,37 +27,34 @@ class ListJobRequestFragment :
     override val viewModel: ListJobRequestViewModel by viewModel()
     private var adapterJobReqeust: JobsRequestRVAdapter? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
         adapterJobReqeust = JobsRequestRVAdapter(requireContext(), arrayListOf())
 
-        rv_job_request.apply {
+        binding.rvJobRequest.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterJobReqeust
         }
 
-        cb_select_all.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.cbSelectAll.setOnCheckedChangeListener { buttonView, isChecked ->
             adapterJobReqeust?.selectAllItems(isChecked)
         }
 
-        refresh.setOnRefreshListener {
-            refresh.isRefreshing = false
+        binding.refresh.setOnRefreshListener {
+            binding.refresh.isRefreshing = false
             refreshData()
         }
 
 
 
-        btn_accept.setOnClickListener {
+        binding.btnAccept.setOnClickListener {
             var ids = adapterJobReqeust?.getSelectedItem() as ArrayList
             viewModel.acceptMemberRequest(ids)
         }
 
-        btn_reject.setOnClickListener {
+        binding.btnReject.setOnClickListener {
             var ids = adapterJobReqeust?.getSelectedItem() as ArrayList
             viewModel.rejectMemberRequest(ids)
         }
@@ -68,23 +64,23 @@ class ListJobRequestFragment :
                 it.getContentIfNotHandled()?.let {
                     when (it.status) {
                         Status.LOADING -> {
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
                         Status.SUCCESS -> {
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                             it.data?.let { projects ->
                                 if (projects.size == 0) {
-                                    txt_empty.visibility = View.VISIBLE
-                                    rv_job_request.visibility = View.GONE
-                                    cb_select_all.visibility = View.GONE
-                                    btn_accept.visibility = View.GONE
-                                    btn_reject.visibility = View.GONE
+                                    binding.txtEmpty.visibility = View.VISIBLE
+                                    binding.rvJobRequest.visibility = View.GONE
+                                    binding.cbSelectAll.visibility = View.GONE
+                                    binding.btnAccept.visibility = View.GONE
+                                    binding.btnReject.visibility = View.GONE
                                 } else {
-                                    txt_empty.visibility = View.GONE
-                                    rv_job_request.visibility = View.VISIBLE
-                                    cb_select_all.visibility = View.VISIBLE
-                                    btn_accept.visibility = View.VISIBLE
-                                    btn_reject.visibility = View.VISIBLE
+                                    binding.txtEmpty.visibility = View.GONE
+                                    binding.rvJobRequest.visibility = View.VISIBLE
+                                    binding.cbSelectAll.visibility = View.VISIBLE
+                                    binding.btnAccept.visibility = View.VISIBLE
+                                    binding.btnReject.visibility = View.VISIBLE
                                 }
 
                                 var sortList = ArrayList<JobRequest>()
@@ -116,7 +112,7 @@ class ListJobRequestFragment :
                             }
                         }
                         Status.ERROR -> {
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }
@@ -156,7 +152,7 @@ class ListJobRequestFragment :
     }
 
     private fun refreshData() {
-        cb_select_all.isChecked = false
+        binding.cbSelectAll.isChecked = false
         adapterJobReqeust?.clear()
         viewModel.getJobRequest(JobRequestStatus.Pending.value)
     }

@@ -19,10 +19,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.SphericalUtil
 import io.nlopez.smartlocation.SmartLocation
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 
 class ReportCompetitorViewModel(
@@ -45,8 +44,7 @@ class ReportCompetitorViewModel(
             when (listUri.size) {
                 1 -> {
                     val type = getTypeMedia(listUri.get(0))
-                    val requestBody1: RequestBody =
-                        File(listUri.get(0)).asRequestBody(type.toMediaTypeOrNull())
+                    val requestBody1: RequestBody = RequestBody.create(type, File(listUri.get(0)))
 
                     val fileToUpload1: MultipartBody.Part =
                         MultipartBody.Part.createFormData(
@@ -64,14 +62,13 @@ class ReportCompetitorViewModel(
                     )
                     _createActivity.postValue(Event(Resource.success(result.data)))
                 }
+
                 2 -> {
                     val type1 = getTypeMedia(listUri.get(0))
-                    val requestBody1: RequestBody =
-                        File(listUri.get(0)).asRequestBody(type1.toMediaTypeOrNull())
+                    val requestBody1: RequestBody = RequestBody.create(type1, File(listUri.get(0)))
 
                     val type2 = getTypeMedia(listUri.get(1))
-                    val requestBody2: RequestBody =
-                        File(listUri.get(1)).asRequestBody(type2.toMediaTypeOrNull())
+                    val requestBody2: RequestBody = RequestBody.create(type2, File(listUri.get(1)))
 
                     val fileToUpload1: MultipartBody.Part =
                         MultipartBody.Part.createFormData(
@@ -96,18 +93,16 @@ class ReportCompetitorViewModel(
                     )
                     _createActivity.postValue(Event(Resource.success(result.data)))
                 }
+
                 else -> {
                     val type1 = getTypeMedia(listUri.get(0))
-                    val requestBody1: RequestBody =
-                        File(listUri.get(0)).asRequestBody(type1.toMediaTypeOrNull())
+                    val requestBody1: RequestBody = RequestBody.create(type1, File(listUri.get(0)))
 
                     val type2 = getTypeMedia(listUri.get(1))
-                    val requestBody2: RequestBody =
-                        File(listUri.get(1)).asRequestBody(type2.toMediaTypeOrNull())
+                    val requestBody2: RequestBody = RequestBody.create(type2, File(listUri.get(1)))
 
                     val type3 = getTypeMedia(listUri.get(2))
-                    val requestBody3: RequestBody =
-                        File(listUri.get(2)).asRequestBody(type3.toMediaTypeOrNull())
+                    val requestBody3: RequestBody = RequestBody.create(type3, File(listUri.get(2)))
 
                     val fileToUpload1: MultipartBody.Part =
                         MultipartBody.Part.createFormData(
@@ -165,11 +160,11 @@ class ReportCompetitorViewModel(
         }
     }
 
-    private fun getTypeMedia(url: String): String {
+    private fun getTypeMedia(url: String): MediaType {
         if (url.contains("mp4")) {
-            return "video/mp4"
+            return MediaType.get("video/mp4")
         } else {
-            return "image/jpeg"
+            return MediaType.get("image/jpeg")
         }
     }
 

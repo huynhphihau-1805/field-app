@@ -17,7 +17,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.formatStartEndFullDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_report_sales.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ReportSalesFragment :
@@ -68,27 +67,27 @@ class ReportSalesFragment :
 
         jobResponse?.let {
             it.project?.let {
-                txt_project_name?.text = it.name.toString()
+                binding.txtProjectName.text = it.name.toString()
             }
             it.store?.let {
-                txt_address?.text = it.address.toString()
+                binding.txtAddress.text = it.address.toString()
             }
 
             if (it.startTime != null && it.endTime != null) {
-                txt_time?.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
+                binding.txtTime.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
             }
             it.status?.let {
                 if (it.equals("Processing")) {
-                    txt_staus?.text = "Đang chạy"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đang chạy"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorAccent,
                             null
                         )
                     )
                 } else {
-                    txt_staus?.text = "Đã đóng"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đã đóng"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorGray,
                             null
@@ -98,16 +97,19 @@ class ReportSalesFragment :
             }
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_add_customer?.setSingleClick {
+        binding.btnAddCustomer.setSingleClick {
             jobResponse?.store?.let { store ->
                 if (viewModel.verifyLocation(store)) {
                     findNavController().navigate(
                         R.id.action_reportSalesFragment_to_addOrderFragment,
-                        bundleOf("taskId" to taskId, "projectId" to jobResponse?.project?.id.toString())
+                        bundleOf(
+                            "taskId" to taskId,
+                            "projectId" to jobResponse?.project?.id.toString()
+                        )
                     )
                 } else {
                     val dialog = TimeKeepingDialog()
@@ -139,7 +141,7 @@ class ReportSalesFragment :
                 }
             })
 
-        rv_customer.apply {
+        binding.rvCustomer.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mOrderAdatper
         }
@@ -148,26 +150,28 @@ class ReportSalesFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             if (it.size == 0) {
-                                txt_num_customer?.visibility = View.GONE
-                                rl_empty.visibility = View.VISIBLE
-                                rv_customer.visibility = View.GONE
+                                binding.txtNumCustomer?.visibility = View.GONE
+                                binding.rlEmpty.visibility = View.VISIBLE
+                                binding.rvCustomer.visibility = View.GONE
                             } else {
-                                txt_num_customer?.visibility = View.VISIBLE
-                                txt_num_customer?.text = it.size.toString() + " đơn hàng"
-                                rl_empty.visibility = View.GONE
-                                rv_customer.visibility = View.VISIBLE
+                                binding.txtNumCustomer.visibility = View.VISIBLE
+                                binding.txtNumCustomer.text = it.size.toString() + " đơn hàng"
+                                binding.rlEmpty.visibility = View.GONE
+                                binding.rvCustomer.visibility = View.VISIBLE
                                 mOrderAdatper.addAll(it as ArrayList<OrderResponse>)
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }

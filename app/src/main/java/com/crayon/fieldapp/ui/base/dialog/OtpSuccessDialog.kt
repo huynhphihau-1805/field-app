@@ -27,9 +27,6 @@ class OtpSuccessDialog(val onConfirmButtonClick: (() -> Unit)) : DialogFragment(
             }
         }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-    }
 
     override fun onStart() {
         super.onStart()

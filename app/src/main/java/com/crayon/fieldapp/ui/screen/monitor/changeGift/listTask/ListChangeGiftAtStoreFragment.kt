@@ -21,20 +21,12 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.toTimeString
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_list_change_gift_at_store.*
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.btn_filter_store
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.ic_select_date
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.imb_ic_back
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.pb_loading
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.rv_members
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.tv_title
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.txt_filter_role_status
-import kotlinx.android.synthetic.main.fragment_list_update_status_at_store.txt_start_date
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import studio.phillip.yolo.utils.TimeFormatUtils
 import java.io.Serializable
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 import java.util.stream.Collectors
 
 class ListChangeGiftAtStoreFragment() :
@@ -91,7 +83,7 @@ class ListChangeGiftAtStoreFragment() :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ic_select_date.setSingleClick {
+        binding.icSelectDate.setSingleClick {
             val datepicker = SelectDatePickerDialog(
                 agencyId = agencyId.toString(),
                 projectId = projectId.toString(),
@@ -104,7 +96,7 @@ class ListChangeGiftAtStoreFragment() :
             datepicker.show(childFragmentManager, datepicker.getTag())
         }
 
-        btn_customer?.setSingleClick {
+        binding.btnCustomer.setSingleClick {
             val start_date = TimeFormatUtils.getDate(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -128,7 +120,7 @@ class ListChangeGiftAtStoreFragment() :
             )
         }
 
-        btn_promotion?.setSingleClick {
+        binding.btnPromotion.setSingleClick {
             val start_date = TimeFormatUtils.getDate(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -152,7 +144,7 @@ class ListChangeGiftAtStoreFragment() :
             )
         }
 
-        btn_gift?.setSingleClick {
+        binding.btnGift.setSingleClick {
             val start_date = TimeFormatUtils.getDate(
                 calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH),
@@ -178,7 +170,7 @@ class ListChangeGiftAtStoreFragment() :
             )
         }
 
-        btn_filter_store?.setSingleClick {
+        binding.btnFilterStore.setSingleClick {
             mTasks?.let {
                 val storeDialog = FilterStoreDialog({ listRoleIds ->
                     filterStoreIds.clear()
@@ -190,13 +182,13 @@ class ListChangeGiftAtStoreFragment() :
                             }
                             mAdapter?.clearAll()
                             mAdapter?.addAll(filter)
-                            txt_filter_role_status?.visibility = View.VISIBLE
+                            binding.txtFilterRoleStatus.visibility = View.VISIBLE
                         }
                     } else {
                         mTasks?.let {
                             mAdapter?.clearAll()
                             mAdapter?.addAll(it)
-                            txt_filter_role_status?.visibility = View.GONE
+                            binding.txtFilterRoleStatus.visibility = View.GONE
                         }
                     }
                 }, {
@@ -205,7 +197,7 @@ class ListChangeGiftAtStoreFragment() :
                     mAdapter?.clearAll()
                     mTasks?.let {
                         mAdapter?.addAll(it)
-                        txt_filter_role_status?.visibility = View.GONE
+                        binding.txtFilterRoleStatus.visibility = View.GONE
                     }
                 })
                 val bundle = Bundle()
@@ -232,12 +224,12 @@ class ListChangeGiftAtStoreFragment() :
             }
         }
 
-        tv_title.text = projectName
-        txt_start_date.text = TimeFormatUtils.formatDate(calendar.time)
-        imb_ic_back.setSingleClick {
+        binding.tvTitle.text = projectName
+        binding.txtStartDate.text = TimeFormatUtils.formatDate(calendar.time)
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mAdapter
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -269,13 +261,14 @@ class ListChangeGiftAtStoreFragment() :
                     when (it.status) {
                         Status.LOADING -> {
                             mIsLoading = true
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
+
                         Status.SUCCESS -> {
                             mIsLoading = false
 
-                            pb_loading.visibility = View.GONE
-                            rv_members.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.GONE
+                            binding.rvMembers.visibility = View.VISIBLE
                             it.data?.let { mListTasks ->
                                 if (mListTasks.size != 0) {
                                     mIsEndList = false
@@ -286,9 +279,10 @@ class ListChangeGiftAtStoreFragment() :
                                 }
                             }
                         }
+
                         Status.ERROR -> {
                             mIsLoading = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }
@@ -297,18 +291,20 @@ class ListChangeGiftAtStoreFragment() :
                 it.getContentIfNotHandled()?.let {
                     when (it.status) {
                         Status.LOADING -> {
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
+
                         Status.SUCCESS -> {
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                             it.data?.let {
-                                txt_num_customer?.text = it.totalCustomer.toString() + " người"
-                                txt_num_promotion?.text = it.totalPromotion.toString() + " gói"
-                                txt_gift_customer?.text = it.totalGift.toString() + " phần"
+                                binding.txtNumCustomer.text = it.totalCustomer.toString() + " người"
+                                binding.txtNumPromotion.text = it.totalPromotion.toString() + " gói"
+                                binding.txtGiftCustomer.text = it.totalGift.toString() + " phần"
                             }
                         }
+
                         Status.ERROR -> {
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }
@@ -327,7 +323,7 @@ class ListChangeGiftAtStoreFragment() :
     private fun formatTime() {
         val myFormat = "dd/MM/yyyy"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
-        txt_start_date.text = sdf.format(calendar.time).toString()
+        binding.txtStartDate.text = sdf.format(calendar.time).toString()
         mTasks.clear()
         mAdapter?.clearAll()
         skip = 0

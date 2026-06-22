@@ -5,14 +5,13 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager.widget.ViewPager
-import com.google.android.material.tabs.TabLayout
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentManageApplicationBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.BaseVPAdapter
 import com.crayon.fieldapp.ui.screen.monitor.application.list.ListManagementApplicationFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_manage_application.*
+import com.google.android.material.tabs.TabLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageApplicationFragment :
@@ -41,22 +40,18 @@ class ManageApplicationFragment :
         viewPager = view.findViewById(R.id.vp_application)
 
         setupViewPager()
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
+
 
     private fun setupViewPager() {
         mAdapter = BaseVPAdapter(childFragmentManager)
         val waiting = ListManagementApplicationFragment()
         val approved = ListManagementApplicationFragment()
-        waiting.arguments = bundleOf("status" to "wait", "agencyId" to  agencyId)
-        approved.arguments = bundleOf("status" to "approved", "agencyId" to  agencyId)
+        waiting.arguments = bundleOf("status" to "wait", "agencyId" to agencyId)
+        approved.arguments = bundleOf("status" to "approved", "agencyId" to agencyId)
         mAdapter.addFragment(waiting, "Chờ duyệt")
         mAdapter.addFragment(approved, "Đã duyệt")
 
@@ -64,6 +59,6 @@ class ManageApplicationFragment :
             offscreenPageLimit = 2
             adapter = mAdapter
         }
-        tabLayout!!.setupWithViewPager(viewPager)
+        tabLayout.setupWithViewPager(viewPager)
     }
 }

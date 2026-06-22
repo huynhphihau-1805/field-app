@@ -14,7 +14,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showConfirmDialog
 import com.crayon.fieldapp.utils.showDialog
-import kotlinx.android.synthetic.main.fragment_member_project.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MemberProjectFragment : BaseFragment<FragmentMemberProjectBinding, MemberProjectViewModel>() {
@@ -37,11 +36,11 @@ class MemberProjectFragment : BaseFragment<FragmentMemberProjectBinding, MemberP
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_choose?.setSingleClick {
+        binding.btnChoose.setSingleClick {
             context.showConfirmDialog(
                 title = "Bạn có muốn xoá nhân viên không?",
                 textPositive = "Có",
@@ -58,14 +57,9 @@ class MemberProjectFragment : BaseFragment<FragmentMemberProjectBinding, MemberP
             )
         }
 
-        cb_select_all?.setOnCheckedChangeListener { compoundButton, isChecked ->
+        binding.cbSelectAll.setOnCheckedChangeListener { compoundButton, isChecked ->
             adapterMembers?.selectAllItems(isChecked)
         }
-
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         adapterMembers = AddMemberRVAdapter(
             arrayListOf(),
@@ -73,7 +67,7 @@ class MemberProjectFragment : BaseFragment<FragmentMemberProjectBinding, MemberP
             itemClickListener = { toUserDetail(it.id) }
         )
 
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapterMembers
         }
@@ -84,16 +78,18 @@ class MemberProjectFragment : BaseFragment<FragmentMemberProjectBinding, MemberP
             members.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapterMembers?.addMember(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })

@@ -7,7 +7,6 @@ import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentTermBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_term.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class TermFragment : BaseFragment<FragmentTermBinding, TermViewModel>() {
@@ -19,7 +18,7 @@ class TermFragment : BaseFragment<FragmentTermBinding, TermViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack?.setSingleClick {
             findNavController().navigateUp()
         }
     }
@@ -27,7 +26,7 @@ class TermFragment : BaseFragment<FragmentTermBinding, TermViewModel>() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        wb_content.loadUrl("https://www.fieldapp.vn/policies")
+        binding.wbContent.loadUrl("https://www.fieldapp.vn/policies")
 
     }
 }

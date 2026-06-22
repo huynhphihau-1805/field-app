@@ -6,14 +6,12 @@ import android.widget.AdapterView
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.crayon.fieldapp.R
-import com.crayon.fieldapp.data.remote.response.UserStatus
 import com.crayon.fieldapp.databinding.FragmentBankBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.SimpleSPAdapter
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
-import kotlinx.android.synthetic.main.fragment_bank.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class BankFragment : BaseFragment<FragmentBankBinding, BankViewModel>() {
@@ -34,11 +32,11 @@ class BankFragment : BaseFragment<FragmentBankBinding, BankViewModel>() {
             getListBank()
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        sp_bank_name?.onItemSelectedListener = object :
+        binding.spBankName.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
@@ -56,26 +54,26 @@ class BankFragment : BaseFragment<FragmentBankBinding, BankViewModel>() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             viewModel.updateBankInfo(
-                tax = edt_tax.text.toString().trim(),
-                bankNumber = edt_bank_id.text.toString().trim(),
-                bankName = bankAdapter.getItem(sp_bank_name.selectedItemPosition).name.trim(),
-                bankBrand = edt_brand.text.toString().trim()
+                tax = binding.edtTax.text.toString().trim(),
+                bankNumber = binding.edtBankId.text.toString().trim(),
+                bankName = bankAdapter.getItem(binding.spBankName.selectedItemPosition).name.trim(),
+                bankBrand = binding.edtBrand.text.toString().trim()
             )
         }
 
         viewModel.apply {
             banks.observe(viewLifecycleOwner, Observer {
                 bankAdapter.addItems(it)
-                sp_bank_name.adapter = bankAdapter
+                binding.spBankName.adapter = bankAdapter
             })
 
             user.observe(viewLifecycleOwner, Observer {
                 var current_bank = bankAdapter.getPositionByName(it.profile!!.bankName.toString())
                 if (current_bank != -1) {
                     bankCode = bankAdapter.getItem(current_bank).id
-                    sp_bank_name.setSelection(current_bank)
+                    binding.spBankName.setSelection(current_bank)
                 }
             })
 
@@ -84,10 +82,12 @@ class BankFragment : BaseFragment<FragmentBankBinding, BankViewModel>() {
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         requireContext().showMessageDialog(title = "Cập nhật thông tin ngân hàng thành công")
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }

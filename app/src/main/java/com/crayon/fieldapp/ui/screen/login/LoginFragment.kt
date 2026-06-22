@@ -12,7 +12,6 @@ import com.crayon.fieldapp.ui.screen.verifyOtp.VerifyOtpFragment
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
-import kotlinx.android.synthetic.main.fragment_login.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class LoginFragment : BaseFragment<FragmentLoginBinding, LoginViewModel>() {
@@ -24,17 +23,13 @@ class LoginFragment : BaseFragment<FragmentLoginBinding, LoginViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        bn_login.setOnClickListener {
-            viewModel.clickLogin(edt_phone.text.toString(), edt_pass.text.toString())
+        binding.bnLogin.setOnClickListener {
+            viewModel.clickLogin(binding.edtPhone.text.toString(), binding.edtPass.text.toString())
         }
 
-        bn_forgot.setSingleClick {
+        binding.bnForgot.setSingleClick {
             findNavController().navigate(R.id.action_login_to_forgotPasswordFragment)
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         viewModel.apply {
             isVerifySuccess.observe(viewLifecycleOwner, Observer {
@@ -43,17 +38,19 @@ class LoginFragment : BaseFragment<FragmentLoginBinding, LoginViewModel>() {
                         Status.LOADING -> {
                             showLoadingDialog()
                         }
+
                         Status.SUCCESS -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                             val bundel = bundleOf(
                                 "mode" to VerifyOtpFragment.VERIFY_LOGIN_MODE,
-                                "phone" to edt_phone.text.toString(),
-                                "password" to edt_pass.text.toString()
+                                "phone" to binding.edtPhone.text.toString(),
+                                "password" to binding.edtPass.text.toString()
                             )
                             findNavController().navigate(R.id.to_verify, bundel)
                         }
+
                         Status.ERROR -> {
-                            dismissLLoadingDialog()
+                            dismissLoadingDialog()
                         }
                     }
                 }
@@ -66,6 +63,5 @@ class LoginFragment : BaseFragment<FragmentLoginBinding, LoginViewModel>() {
                 context?.showMessageDialog(it)
             })
         }
-
     }
 }

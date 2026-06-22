@@ -1,7 +1,6 @@
 package com.crayon.fieldapp.ui.screen.monitor.changeGift.detailTask
 
 import android.os.Bundle
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,7 +13,6 @@ import com.crayon.fieldapp.ui.screen.detailTask.changeGift.adapter.CustomerRVAda
 import com.crayon.fieldapp.utils.formatStartEndFullDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_change_gift_at_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailChangeGiftAtStoreFragment() :
@@ -69,37 +67,37 @@ class DetailChangeGiftAtStoreFragment() :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
 
         taskResponse?.let {
             it.project?.let {
-                txt_project_name?.text = it.name.toString()
+                binding.txtProjectName.text = it.name.toString()
             }
             it.store?.let {
-                txt_address?.text = it.address.toString()
-                tv_title?.text = it.name.toString()
+                binding.txtAddress.text = it.address.toString()
+                binding.tvTitle.text = it.name.toString()
             }
 
             it.job?.let { job ->
                 if (job.startTime != null && job.endTime != null) {
-                    txt_time?.text = formatStartEndFullDate(job.startTime!!, job.endTime!!)
+                    binding.txtTime.text = formatStartEndFullDate(job.startTime!!, job.endTime!!)
                 }
             }
 
             it.status?.let {
                 if (it.equals("Processing")) {
-                    txt_staus?.text = "Đang chạy"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đang chạy"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorAccent,
                             null
                         )
                     )
                 } else {
-                    txt_staus?.text = "Đã đóng"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đã đóng"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorGray,
                             null
@@ -108,11 +106,11 @@ class DetailChangeGiftAtStoreFragment() :
                 }
             }
 
-            txt_num_customer?.text = listCustomer.size.toString() + " khách hàng"
+            binding.txtNumCustomer.text = listCustomer.size.toString() + " khách hàng"
         }
 
 
-        rv_customer.apply {
+        binding.rvCustomer.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mCompetitorAdapter
         }

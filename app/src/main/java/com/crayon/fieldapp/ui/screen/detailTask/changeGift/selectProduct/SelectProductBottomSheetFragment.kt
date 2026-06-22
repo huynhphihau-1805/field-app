@@ -7,24 +7,22 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.SearchView
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.data.remote.response.ProductResponse
+import com.crayon.fieldapp.databinding.DialogSelectProductBinding
 import com.crayon.fieldapp.ui.screen.detailTask.reportSales.adapter.SelectProductRVAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.reportSales.addOrder.dialog.EditPriceProductDialog
 import com.crayon.fieldapp.utils.Utils
 import com.crayon.fieldapp.utils.setSingleClick
 import com.example.moviedb.utils.getQueryTextChangeStateFlow
-import kotlinx.android.synthetic.main.dialog_select_product.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -33,142 +31,132 @@ import kotlinx.coroutines.withContext
 
 
 class SelectProductBottomSheetFragment(
-    val product: ArrayList<ProductResponse>,
-    val onSelectProductListener: (ArrayList<ProductResponse>) -> Unit = {},
-    val onUpdatePriceListener: (product: ProductResponse, price: Int) -> Unit = { product, price -> }
+    private val product: ArrayList<ProductResponse>,
+    private val onSelectProductListener: (ArrayList<ProductResponse>) -> Unit = {},
+    private val onUpdatePriceListener: (product: ProductResponse, price: Int) -> Unit = { product, price -> }
 ) : DialogFragment() {
-    lateinit var rvProudct: RecyclerView
-    lateinit var btnConfirm: Button
 
-    lateinit var mProductAdapter: SelectProductRVAdapter
-    lateinit var mLayoutManager: RecyclerView.LayoutManager
+    private var _binding: DialogSelectProductBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var mProductAdapter: SelectProductRVAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? =
-        inflater.inflate(R.layout.dialog_select_product, container, false).apply {
-            rvProudct = findViewById(R.id.rv_product)
-            btnConfirm = findViewById(R.id.btn_update)
-
-            btnConfirm.setOnClickListener {
-                val allItemSelected = mProductAdapter.getAllItemSelected()
-                onSelectProductListener(allItemSelected)
-                this@SelectProductBottomSheetFragment.dismiss()
-            }
-
-            this@SelectProductBottomSheetFragment.activity?.let { activity ->
-                mProductAdapter =
-                    SelectProductRVAdapter(
-                        items = product,
-                        onItemSelectClick = { mProduct, isChecked ->
-                            if (isChecked) {
-                                mProductAdapter.selectItem(mProduct)
-                            } else {
-                                mProductAdapter.unSelectItem(mProduct)
-                            }
-                        },
-                        onPriceClick = { mProduct ->
-                            val dialog =
-                                EditPriceProductDialog(mProduct, onUpdatePriceClick = { mPrice ->
-                                    onUpdatePriceListener(mProduct, mPrice)
-                                    mProductAdapter.updatePrice(item = mProduct, price = mPrice)
-                                })
-                            dialog.show(requireActivity().supportFragmentManager, dialog.tag)
-                        },
-                        context = requireContext(),
-                        onItemAddClick = { mProduct ->
-                            var newQuantity = mProduct.quantity + 1
-                            mProductAdapter.updateQuantity(mProduct, newQuantity)
-                        },
-                        onItemMinusClick = { mProduct ->
-                            var newQuantity = mProduct.quantity - 1
-                            if (newQuantity <= 0) {
-                                newQuantity = 1
-                            }
-                            mProductAdapter.updateQuantity(mProduct, newQuantity)
-                        }
-                    )
-
-                mLayoutManager = LinearLayoutManager(activity)
-                rvProudct.setLayoutManager(mLayoutManager)
-                rvProudct.adapter = mProductAdapter
-            }
-        }
+    ): View? {
+        _binding = DialogSelectProductBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     override fun onStart() {
         super.onStart()
-        val dialog = dialog
-        if (dialog != null) {
-            dialog.setCanceledOnTouchOutside(true)
-            val window = dialog.window
-            val wlp = window!!.attributes
-            wlp.gravity = Gravity.BOTTOM
-            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            window.attributes = wlp
-            window.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+
+        dialog?.apply {
+            setCanceledOnTouchOutside(true)
+            window?.apply {
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                attributes = attributes.apply {
+                    gravity = Gravity.BOTTOM
+                }
+                setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            binding.apply {
+                cbSelectAll.setOnClickListener {
+                    val isChecked = cbSelectAll.isChecked
+                    if (isChecked) {
+                        mProductAdapter.selectAll()
+                    } else {
+                        mProductAdapter.unSelectAll()
+                    }
+                }
+
+                btnCancel.setOnClickListener {
+                    dismiss()
+                }
+                val iconSearchClose = svProduct.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
+                iconSearchClose?.setSingleClick {
+                    val et = svProduct.findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
+                    et.setText("")
+                    svProduct.setQuery("", false)
+                    mProductAdapter.refresh()
+                    Utils.hideKeyboard(requireActivity())
+                }
+
+                svProduct.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
+                    androidx.appcompat.widget.SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        mProductAdapter.getFilter().filter(query.toString())
+                        return true
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        return true
+                    }
+                })
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                binding.svProduct.getQueryTextChangeStateFlow()
+                    .debounce(1000)
+                    .filter { query -> query.isNotEmpty() }
+                    .distinctUntilChanged()
+                    .collect { result ->
+                        withContext(Dispatchers.Main) {
+                            mProductAdapter.getFilter().filter(result)
+                        }
+                    }
+            }
+
+            binding.rvProduct.apply {
+                layoutManager = LinearLayoutManager(requireContext())
+                adapter = mProductAdapter
+            }
+
+            mProductAdapter = SelectProductRVAdapter(
+                items = product,
+                onItemSelectClick = { mProduct, isChecked ->
+                    if (isChecked) {
+                        mProductAdapter.selectItem(mProduct)
+                    } else {
+                        mProductAdapter.unSelectItem(mProduct)
+                    }
+                },
+                onPriceClick = { mProduct ->
+                    val dialog = EditPriceProductDialog(mProduct, onUpdatePriceClick = { mPrice ->
+                        onUpdatePriceListener(mProduct, mPrice)
+                        mProductAdapter.updatePrice(mProduct, mPrice)
+                    })
+                    dialog.show(requireActivity().supportFragmentManager, dialog.tag)
+                },
+                context = requireContext(),
+                onItemAddClick = { mProduct ->
+                    val newQuantity = mProduct.quantity + 1
+                    mProductAdapter.updateQuantity(mProduct, newQuantity)
+                },
+                onItemMinusClick = { mProduct ->
+                    var newQuantity = mProduct.quantity - 1
+                    if (newQuantity <= 0) {
+                        newQuantity = 1
+                    }
+                    mProductAdapter.updateQuantity(mProduct, newQuantity)
+                }
             )
-
-            dialog.cb_select_all?.setOnClickListener {
-                val isChecked = dialog.cb_select_all.isChecked
-                if (isChecked) {
-                    mProductAdapter.selectAll()
-                } else {
-                    mProductAdapter.unSelectAll()
-                }
-            }
-            dialog.btn_cancel?.setOnClickListener {
-                dialog.dismiss()
-            }
-
-            val iconSearchClose = dialog.sv_product?.findViewById<ImageView>(R.id.search_close_btn)
-            iconSearchClose?.setSingleClick {
-                val et =
-                    dialog.sv_product?.findViewById(com.crayon.fieldapp.R.id.search_src_text) as EditText
-                et.setText("")
-                dialog.sv_product?.setQuery("", false)
-                mProductAdapter.refresh()
-                Utils.hideKeyboard(requireActivity())
-            }
-
-            dialog.sv_product?.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
-                androidx.appcompat.widget.SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    mProductAdapter.getFilter().filter(query.toString())
-                    return true
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    return true
-                }
-
-            })
-
-            GlobalScope.launch {
-                dialog.sv_product?.let {
-                    it.getQueryTextChangeStateFlow()
-                        .debounce(1000)
-                        .filter { query ->
-                            if (query.isEmpty()) {
-                                return@filter false
-                            } else {
-                                return@filter true
-                            }
-                        }
-                        .distinctUntilChanged()
-                        .collect { result ->
-                            withContext(Dispatchers.Main) {
-//                            sv_product?.clearFocus()
-                                mProductAdapter.getFilter().filter(result)
-                            }
-                        }
-                }
-            }
-
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        Utils.hideKeyboard(requireActivity())
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

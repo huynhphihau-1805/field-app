@@ -4,8 +4,11 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -13,10 +16,12 @@ import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentAvatarBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.dialog.getPhoto.GetPhotoDialogFragment
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_avatar.*
+import com.crayon.fieldapp.utils.FileManager
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.loadImage
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showMessageDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.io.File
 
 class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
     GetPhotoDialogFragment.GetPhotoDialogListener {
@@ -28,37 +33,71 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
     private var tyeImage: String = ""
     private var avatarRef: Uri? = null
     private var bodyRef: Uri? = null
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        galleryLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data = result.data
+                    val selectedImageUri = data?.data
+                    val path = FileManager.getPath(requireContext(), selectedImageUri)
+                    val file = viewModel.createFile(path, 100)
+                    when (tyeImage) {
+                        "avatar" -> {
+                            binding.imgIcAvatar.loadImage(
+                                imageUrl = file!!.absolutePath,
+                                centerCrop = true,
+                                circleCrop = true,
+                                fitCenter = true
+                            )
+                            avatarRef = Uri.fromFile(file)
+                            avatarRef?.let { avatar ->
+                                viewModel.updateAvatar(avatar)
+                            }
+                        }
+
+                        "body" -> {
+                            binding.imgIcBody.loadImage(
+                                imageUrl = file!!.absolutePath,
+                                centerCrop = true,
+                                fitCenter = true
+                            )
+                            bodyRef = Uri.fromFile(file)
+                            bodyRef?.let { body ->
+                                viewModel.updateFullBody(body)
+                            }
+                        }
+                    }
+                }
+            }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        rl_avatar?.setSingleClick {
+        binding.rlAvatar.setSingleClick {
             tyeImage = "avatar"
-            val dialog = GetPhotoDialogFragment()
-            dialog.setListener(this)
-            dialog.show(childFragmentManager, dialog.tag)
+            openCamera()
         }
 
-        rl_body?.setSingleClick {
+        binding.rlBody.setSingleClick {
             tyeImage = "body"
-            val dialog = GetPhotoDialogFragment()
-            dialog.setListener(this)
-            dialog.show(childFragmentManager, dialog.tag)
+            openCamera()
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
             ?.observe(viewLifecycleOwner, Observer { result ->
                 val file =
                     viewModel.createImageFileToUpload(requireContext(), result, tyeImage)
                 when (tyeImage) {
                     "avatar" -> {
-                        img_ic_avatar.loadImage(
+                        binding.imgIcAvatar.loadImage(
                             imageUrl = Uri.fromFile(file).path,
                             centerCrop = true,
                             circleCrop = true,
@@ -70,8 +109,9 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
                             viewModel.updateAvatar(avatar)
                         }
                     }
+
                     "body" -> {
-                        img_ic_body.loadImage(
+                        binding.imgIcBody.loadImage(
                             imageUrl = Uri.fromFile(file).path,
                             centerCrop = true,
                             fitCenter = true
@@ -93,6 +133,7 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         if (tyeImage.equals("avatar")) {
@@ -102,14 +143,14 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
                         }
 
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
                 }
             })
-
             user.observe(viewLifecycleOwner, Observer { userInfo ->
-                img_ic_avatar.loadImage(
+                binding.imgIcAvatar.loadImage(
                     imageUrl = userInfo.avatarUrl,
                     centerCrop = true,
                     circleCrop = true,
@@ -117,7 +158,9 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
                     fitCenter = true
                 )
 
-                img_ic_body.loadImage(
+                binding.tvTitle.text = userInfo.lastName + " " + userInfo.firstName
+
+                binding.imgIcBody.loadImage(
                     imageUrl = userInfo.profile!!.fullBodyImageUrl,
                     centerCrop = true,
                     signatureKey = userInfo.updatedAt,
@@ -127,50 +170,11 @@ class AvatarFragment : BaseFragment<FragmentAvatarBinding, AvatarViewModel>(),
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                CODE_REQUEST_GALLERY -> {
-                    var selectedImageUri = data!!.data
-                    val path = FileManager.getPath(requireContext(), selectedImageUri)
-                    val file =
-                        viewModel.createImageFileToUpload(requireContext(), path, tyeImage)
-                    when (tyeImage) {
-                        "avatar" -> {
-                            img_ic_avatar.loadImage(
-                                imageUrl = file!!.absolutePath,
-                                centerCrop = true,
-                                circleCrop = true,
-                                fitCenter = true
-                            )
-                            avatarRef = Uri.fromFile(file)
-                            avatarRef?.let { avatar ->
-                                viewModel.updateAvatar(avatar)
-                            }
-                        }
-                        "body" -> {
-                            img_ic_body.loadImage(
-                                imageUrl = file!!.absolutePath,
-                                centerCrop = true,
-                                fitCenter = true
-                            )
-                            bodyRef = Uri.fromFile(file)
-                            bodyRef?.let { body ->
-                                viewModel.updateFullBody(body)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private fun openGallery() {
         val intent = Intent()
         intent.type = "image/*"
         intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), CODE_REQUEST_GALLERY)
+        galleryLauncher.launch(intent)
     }
 
     private fun openCamera() {

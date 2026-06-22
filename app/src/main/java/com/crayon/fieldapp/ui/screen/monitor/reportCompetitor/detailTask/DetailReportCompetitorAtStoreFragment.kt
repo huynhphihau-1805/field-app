@@ -15,8 +15,6 @@ import com.crayon.fieldapp.utils.formatDate
 import com.crayon.fieldapp.utils.formatHour
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_attendance_at_store.imb_ic_back
-import kotlinx.android.synthetic.main.fragment_detail_report_competitor_at_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailReportCompetitorAtStoreFragment() :
@@ -57,38 +55,38 @@ class DetailReportCompetitorAtStoreFragment() :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        rv_customer.apply {
+        binding.rvCustomer.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mCompetitorAdapter
         }
 
-        imb_ic_back.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
 
         taskResponse?.let {
             it.project?.let {
-                txt_project_name?.text = it.name.toString()
+                binding.txtProjectName?.text = it.name.toString()
             }
             it.store?.let {
-                tv_title?.text = it.name.toString()
-                txt_address?.text = it.address.toString()
+                binding.tvTitle.text = it.name.toString()
+                binding.txtAddress.text = it.address.toString()
             }
             it.job?.let {
-                txt_time?.text =
+                binding.txtTime.text =
                     formatHour(it.startTime.toString()) + "-" + formatHour(it.endTime.toString()) + " ngày " + formatDate(
                         it.endTime.toString()
                     )
             }
             it.pic?.let {
-                txt_pic?.text = it.lastName + " " + it.firstName
+                binding.txtPic.text = it.lastName + " " + it.firstName
             }
             it.status?.let {
-                txt_staus?.text = it
+                binding.txtStaus.text = it
             }
             it.opponents?.let {
                 mCompetitorAdapter?.addItems(it)
-                txt_num_customer?.text = it.size.toString() + " hoạt động"
+                binding.txtNumCustomer.text = it.size.toString() + " hoạt động"
             }
 
         }

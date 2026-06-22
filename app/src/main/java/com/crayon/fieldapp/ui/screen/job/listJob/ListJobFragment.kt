@@ -1,13 +1,10 @@
 package com.crayon.fieldapp.ui.screen.job.listJob
 
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
@@ -17,18 +14,12 @@ import com.crayon.fieldapp.databinding.FragmentListMyJobBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.job.listJob.adapter.JobAdapter
 import com.crayon.fieldapp.ui.screen.job.listJob.adapter.JobLoadStateAdapter
-import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.android.synthetic.main.fragment_list_my_job.*
-import kotlinx.android.synthetic.main.fragment_list_my_job.pb_loading
-import kotlinx.android.synthetic.main.fragment_list_my_job.refresh_layout
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListJobFragment : BaseFragment<FragmentListMyJobBinding, ListJobViewModel>() {
@@ -61,26 +52,20 @@ class ListJobFragment : BaseFragment<FragmentListMyJobBinding, ListJobViewModel>
         initAdapter()
         initSearch()
         search(status)
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        retry_button?.setSingleClick {
+        binding.retryButton.setSingleClick {
             adapter.retry()
         }
 
-        refresh_layout?.setOnRefreshListener {
-            refresh_layout?.isRefreshing = false
+        binding.refreshLayout.setOnRefreshListener {
+            binding.refreshLayout.isRefreshing = false
             adapter.refresh()
         }
 
-        rv_job?.apply {
+        binding.rvJob.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
-
-
     }
 
     private fun initSearch() {
@@ -89,19 +74,19 @@ class ListJobFragment : BaseFragment<FragmentListMyJobBinding, ListJobViewModel>
             adapter.loadStateFlow
                 .distinctUntilChangedBy { it.refresh }
                 .filter { it.refresh is LoadState.NotLoading }
-                .collect { rv_job?.scrollToPosition(0) }
+                .collect { binding.rvJob.scrollToPosition(0) }
         }
     }
 
     private fun initAdapter() {
-        rv_job?.adapter = adapter.withLoadStateHeaderAndFooter(
+        binding.rvJob.adapter = adapter.withLoadStateHeaderAndFooter(
             header = JobLoadStateAdapter { adapter.retry() },
             footer = JobLoadStateAdapter { adapter.retry() }
         )
         adapter.addLoadStateListener { loadState ->
-            rv_job?.isVisible = loadState.source.refresh is LoadState.NotLoading
-            pb_loading?.isVisible = loadState.source.refresh is LoadState.Loading
-            retry_button?.isVisible = loadState.source.refresh is LoadState.Error
+            binding.rvJob.isVisible = loadState.source.refresh is LoadState.NotLoading
+            binding.pbLoading.isVisible = loadState.source.refresh is LoadState.Loading
+            binding.retryButton.isVisible = loadState.source.refresh is LoadState.Error
 
             val errorState = loadState.source.append as? LoadState.Error
                 ?: loadState.source.prepend as? LoadState.Error

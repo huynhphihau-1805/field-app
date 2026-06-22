@@ -15,14 +15,12 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.dialog.TimeKeepingDialog
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaData
-import com.crayon.fieldapp.ui.screen.detailTask.base.DetailTaskViewModel
 import com.crayon.fieldapp.ui.screen.imageDialog.ImageDialog
 import com.crayon.fieldapp.utils.FileManager
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_task_attendance.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -32,10 +30,10 @@ import studio.phillip.yolo.utils.TaskUtils
 import java.io.File
 
 class AttendanceFragment :
-    BaseFragment<FragmentDetailTaskAttendanceBinding, DetailTaskViewModel>() {
+    BaseFragment<FragmentDetailTaskAttendanceBinding, TaskAttendanceViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_detail_task_attendance
-    override val viewModel: DetailTaskViewModel by viewModel()
+    override val viewModel: TaskAttendanceViewModel by viewModel()
     private lateinit var taskId: String
     private lateinit var typeRecord: String
     private var taskResponse: TaskResponse? = null
@@ -61,85 +59,18 @@ class AttendanceFragment :
         viewModel.getDetailTask(taskId)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
-            ?.observe(viewLifecycleOwner, Observer { result ->
-                showImage(result)
-            })
-
-        viewModel.task.observe(viewLifecycleOwner, Observer {
-            it.getContentIfNotHandled()?.let {
-                when (it.status) {
-                    Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
-                    }
-                    Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
-                        tv_title.text = it.data!!.type.name
-                        taskResponse = it.data!!
-                        tv_sub_title.visibility = View.VISIBLE
-                        tv_sub_title.text = "Check In"
-                        taskResponse?.let {
-                            it.attendances?.let { attendances ->
-                                if (attendances.size == 0) {
-                                    tv_sub_title.text = "Check In"
-                                    showButtonCheckIn(true)
-                                    showButtonCheckOut(false)
-                                } else if (attendances.size == 1 && attendances.get(0).checkOutTime == null) {
-                                    tv_sub_title.text = "Check Out"
-                                    showButtonCheckOut(true)
-                                    showButtonCheckIn(false)
-                                } else {
-                                    tv_sub_title.text = "Đã chấm công"
-                                    showButtonCheckIn(false)
-                                    showButtonCheckOut(false)
-                                }
-                            }
-                        }
-                    }
-                    Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
-                    }
-                }
-            }
-        })
-
-        viewModel.apply {
-            updateCheckInOutTask.observe(viewLifecycleOwner, Observer {
-                when (it.status) {
-                    Status.LOADING -> {
-                        showLoading()
-                    }
-                    Status.SUCCESS -> {
-                        hideLoading()
-                        mediaAdapter.clearData()
-                        taskResponse?.let { mTaskResponse ->
-                            context.showMessageDialog("Cập nhật " + mTaskResponse.type!!.name + " thành công",
-                                positiveListener = {
-                                    findNavController().navigateUp()
-                                })
-                        }
-                    }
-                    Status.ERROR -> {
-                        hideLoading()
-                    }
-                }
-            })
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        rv_images.setLayoutManager(GridLayoutManager(requireContext(), 2))
-        rv_images.setHasFixedSize(true)
-        rv_images.setAdapter(mediaAdapter)
+        binding.rvImages.setLayoutManager(GridLayoutManager(requireContext(), 2))
+        binding.rvImages.setHasFixedSize(true)
+        binding.rvImages.setAdapter(mediaAdapter)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_attachment?.setSingleClick {
+        binding.imbAttachment.setSingleClick {
             taskResponse?.let { mTaskResponse ->
                 val taskString = Gson().toJson(mTaskResponse).toString()
                 val bundle = bundleOf("task" to taskString)
@@ -150,7 +81,7 @@ class AttendanceFragment :
             }
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             if (mediaAdapter.itemCount > 1) {
                 context?.showMessageDialog("Bạn chỉ được chụp tối đa 1 tấm")
             } else {
@@ -165,7 +96,7 @@ class AttendanceFragment :
             }
         }
 
-        rl_check_in?.setSingleClick {
+        binding.rlCheckIn.setSingleClick {
             typeRecord = "image"
             taskResponse?.let { mTaskResponse ->
                 if (viewModel.verifyLocation(mTaskResponse)) {
@@ -187,7 +118,19 @@ class AttendanceFragment :
             }
         }
 
-        rl_check_out?.setSingleClick {
+        viewModel.isEnableCheckIn.observe(viewLifecycleOwner, { isEnable ->
+            showButtonCheckIn(isEnable)
+        })
+
+        viewModel.isEnableCheckOut.observe(viewLifecycleOwner, { isEnable ->
+            showButtonCheckOut(isEnable)
+        })
+
+        viewModel.subtitle.observe(viewLifecycleOwner, { subtitle ->
+            binding.tvSubTitle.text = subtitle
+        })
+
+        binding.rlCheckOut.setSingleClick {
             typeRecord = "image"
             taskResponse?.let { mTaskResponse ->
                 if (viewModel.verifyLocation(mTaskResponse)) {
@@ -207,6 +150,59 @@ class AttendanceFragment :
                     dialog.show(childFragmentManager, dialog.tag)
                 }
             }
+        }
+
+        findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
+            ?.observe(viewLifecycleOwner, Observer { result ->
+                if (!mediaAdapter.contains(result)) {
+                    showImage(result)
+                }
+            })
+
+        viewModel.task.observe(viewLifecycleOwner, Observer {
+            it.getContentIfNotHandled()?.let {
+                when (it.status) {
+                    Status.LOADING -> {
+                        binding.pbLoading.visibility = View.VISIBLE
+                    }
+
+                    Status.SUCCESS -> {
+                        binding.pbLoading.visibility = View.GONE
+                        binding.tvTitle.text = it.data!!.type.name
+                        taskResponse = it.data!!
+                        binding.tvSubTitle.visibility = View.VISIBLE
+                    }
+
+                    Status.ERROR -> {
+                        binding.pbLoading.visibility = View.GONE
+                    }
+                }
+            }
+        })
+
+        viewModel.apply {
+            updateCheckInOutTask.observe(viewLifecycleOwner, Observer {
+                when (it.status) {
+                    Status.LOADING -> {
+                        showLoading()
+                    }
+
+                    Status.SUCCESS -> {
+                        hideLoading()
+                        mediaAdapter.clearData()
+                        taskResponse?.let { mTaskResponse ->
+                            context.showMessageDialog("Cập nhật " + mTaskResponse.type!!.name + " thành công",
+                                positiveListener = {
+                                    findNavController().navigateUp()
+                                })
+                        }
+                    }
+
+                    Status.ERROR -> {
+                        hideLoading()
+                    }
+                }
+            })
         }
     }
 
@@ -279,28 +275,28 @@ class AttendanceFragment :
 
     private fun showButtonCheckIn(isShow: Boolean) {
         if (isShow) {
-            rl_check_in.isEnabled = true
-            img_check_in.setColorFilter(
+            binding.rlCheckIn.isEnabled = true
+            binding.imgCheckIn.setColorFilter(
                 resources.getColor(
                     R.color.colorRed,
                     null
                 )
             )
-            txt_check_in.setTextColor(
+            binding.txtCheckIn.setTextColor(
                 resources.getColor(
                     R.color.colorBlack,
                     null
                 )
             )
         } else {
-            rl_check_in.isEnabled = false
-            img_check_in.setColorFilter(
+            binding.rlCheckIn.isEnabled = false
+            binding.imgCheckIn.setColorFilter(
                 resources.getColor(
                     R.color.colorGray,
                     null
                 )
             )
-            txt_check_in.setTextColor(
+            binding.txtCheckIn.setTextColor(
                 resources.getColor(
                     R.color.colorGray,
                     null
@@ -311,28 +307,28 @@ class AttendanceFragment :
 
     private fun showButtonCheckOut(isShow: Boolean) {
         if (isShow) {
-            rl_check_out.isEnabled = true
-            img_check_out.setColorFilter(
+            binding.rlCheckOut.isEnabled = true
+            binding.imgCheckOut.setColorFilter(
                 resources.getColor(
                     R.color.colorRed,
                     null
                 )
             )
-            txt_check_out.setTextColor(
+            binding.txtCheckOut.setTextColor(
                 resources.getColor(
                     R.color.colorBlack,
                     null
                 )
             )
         } else {
-            rl_check_out.isEnabled = false
-            img_check_out.setColorFilter(
+            binding.rlCheckOut.isEnabled = false
+            binding.imgCheckOut.setColorFilter(
                 resources.getColor(
                     R.color.colorGray,
                     null
                 )
             )
-            txt_check_out.setTextColor(
+            binding.txtCheckOut.setTextColor(
                 resources.getColor(
                     R.color.colorGray,
                     null

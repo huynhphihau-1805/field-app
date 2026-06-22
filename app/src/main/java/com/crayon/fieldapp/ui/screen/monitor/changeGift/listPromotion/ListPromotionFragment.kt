@@ -11,7 +11,6 @@ import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.monitor.changeGift.listPromotion.adapter.PromotionRVAdapter
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_list_customer.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListPromotionFragment() :
@@ -51,37 +50,37 @@ class ListPromotionFragment() :
         )
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mAdapter
         }
 
-        imb_ic_back.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         viewModel.apply {
             summary.observe(viewLifecycleOwner, Observer {
                 it.getContentIfNotHandled()?.let {
                     when (it.status) {
                         Status.LOADING -> {
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
+
                         Status.SUCCESS -> {
-                            pb_loading.visibility = View.GONE
-                            rv_members.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.GONE
+                            binding.rvMembers.visibility = View.VISIBLE
                             it.data?.let { mListTasks ->
                                 mAdapter?.addAll(mListTasks)
                             }
                         }
+
                         Status.ERROR -> {
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }

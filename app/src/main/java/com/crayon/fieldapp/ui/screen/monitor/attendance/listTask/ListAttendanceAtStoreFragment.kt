@@ -21,7 +21,6 @@ import com.crayon.fieldapp.ui.screen.monitor.attendance.listTask.adapter.Attenda
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_list_attendance_at_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import studio.phillip.yolo.utils.TimeFormatUtils
 import java.io.Serializable
@@ -70,7 +69,7 @@ class ListAttendanceAtStoreFragment() :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        ic_select_date.setSingleClick {
+        binding.icSelectDate.setSingleClick {
             val datepicker = SelectDatePickerDialog(
                 agencyId = agencyId.toString(),
                 projectId = projectId.toString(),
@@ -82,13 +81,13 @@ class ListAttendanceAtStoreFragment() :
             datepicker.show(childFragmentManager, datepicker.getTag())
         }
 
-        tv_title.text = projectName
-        txt_start_date.text = TimeFormatUtils.formatDate(calendar.time)
-        imb_ic_back.setSingleClick {
+        binding.tvTitle.text = projectName
+        binding.txtStartDate.text = TimeFormatUtils.formatDate(calendar.time)
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
 
-        btn_filter_role?.setSingleClick {
+        binding.btnFilterRole.setSingleClick {
             mTasks?.let {
                 val storeDialog = FilterRoleDialog({ listRoleIds ->
                     filterStoreIds = listRoleIds
@@ -99,13 +98,13 @@ class ListAttendanceAtStoreFragment() :
                             }
                             mAdapter?.clearAll()
                             mAdapter?.addAll(filter)
-                            txt_filter_role_status?.visibility = View.VISIBLE
+                            binding.txtFilterRoleStatus.visibility = View.VISIBLE
                         }
                     } else {
                         mTasks?.let {
                             mAdapter?.clearAll()
                             mAdapter?.addAll(it)
-                            txt_filter_role_status?.visibility = View.GONE
+                            binding.txtFilterRoleStatus.visibility = View.GONE
                         }
                     }
                 }, {
@@ -114,7 +113,7 @@ class ListAttendanceAtStoreFragment() :
                     filterStoreIds = null
                     mTasks?.let {
                         mAdapter?.addAll(it)
-                        txt_filter_role_status?.visibility = View.GONE
+                        binding.txtFilterRoleStatus.visibility = View.GONE
                     }
                 })
                 val bundle = Bundle()
@@ -141,7 +140,7 @@ class ListAttendanceAtStoreFragment() :
             }
         }
 
-        rv_members.apply {
+        binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mAdapter
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -173,11 +172,11 @@ class ListAttendanceAtStoreFragment() :
                     when (it.status) {
                         Status.LOADING -> {
                             mIsLoading = true
-                            pb_loading.visibility = View.VISIBLE
+                            binding.pbLoading.visibility = View.VISIBLE
                         }
                         Status.SUCCESS -> {
                             mIsLoading = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                             it.data?.let { mListTasks ->
                                 if (mListTasks.size != 0) {
                                     mIsEndList = false
@@ -190,7 +189,7 @@ class ListAttendanceAtStoreFragment() :
                         }
                         Status.ERROR -> {
                             mIsLoading = false
-                            pb_loading.visibility = View.GONE
+                            binding.pbLoading.visibility = View.GONE
                         }
                     }
                 }
@@ -207,7 +206,7 @@ class ListAttendanceAtStoreFragment() :
     private fun formatTime() {
         val myFormat = "dd/MM/yyyy"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
-        txt_start_date.text = sdf.format(calendar.time).toString()
+        binding.txtStartDate.text = sdf.format(calendar.time).toString()
         mAdapter?.clearAll()
         mTasks.clear()
         skip = 0

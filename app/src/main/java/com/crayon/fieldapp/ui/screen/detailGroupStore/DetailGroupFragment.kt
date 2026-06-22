@@ -11,8 +11,6 @@ import com.crayon.fieldapp.databinding.FragmentDetailGroupStoreBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.StoreAdapter
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_detail_store.*
-import kotlinx.android.synthetic.main.fragment_list_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailGroupFragment :
@@ -38,7 +36,7 @@ class DetailGroupFragment :
             itemClickListener = { toStoreDetail(it.id.toString()) }
         )
 
-        rv_store.apply {
+        binding.rvStore.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -47,12 +45,12 @@ class DetailGroupFragment :
             getDetailGroup(agencyId, groupId)
 
             groups.observe(viewLifecycleOwner, Observer {
-                tv_title.text = it.name
+                binding.tvTitle.text = it.name
                 adapter.submitList(it.stores)
             })
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

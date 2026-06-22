@@ -13,16 +13,13 @@ import com.crayon.fieldapp.data.remote.response.GiftResponse
 import com.crayon.fieldapp.databinding.FragmentImportGiftBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.receiveGift.adapter.ReceiveGiftAdapter
-import com.crayon.fieldapp.ui.screen.detailTask.changeGift.receiveGift.dialog.EditQuantityGiftDialog
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.Utils
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.example.moviedb.utils.getQueryTextChangeStateFlow
-import kotlinx.android.synthetic.main.fragment_import_gift.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -44,22 +41,27 @@ class ReceiveGiftFragment : BaseFragment<FragmentImportGiftBinding, ReceiveGiftV
         _taskId = requireArguments()?.getString("taskId")
 
         mGiftAdapter =
-            ReceiveGiftAdapter(arrayListOf(), requireContext(), onItemMinusListener = { mGift, position ->
-                var quantity = mGift.quantityIn - 1
-                if (quantity < 0) {
-                    quantity = 0
-                }
-                mGiftAdapter.onUpdateQuantity(mGift, quantity, position)
-            }, onItemPlusListener = { mGift, position ->
-                var quantity = mGift.quantityIn + 1
-                mGiftAdapter.onUpdateQuantity(mGift, quantity, position)
-            }, onItemQuantityListener = { mGift ->
+            ReceiveGiftAdapter(
+                arrayListOf(),
+                requireContext(),
+                onItemMinusListener = { mGift, position ->
+                    var quantity = mGift.quantityIn - 1
+                    if (quantity < 0) {
+                        quantity = 0
+                    }
+                    mGiftAdapter.onUpdateQuantity(mGift, quantity, position)
+                },
+                onItemPlusListener = { mGift, position ->
+                    var quantity = mGift.quantityIn + 1
+                    mGiftAdapter.onUpdateQuantity(mGift, quantity, position)
+                },
+                onItemQuantityListener = { mGift ->
 //                val dialog =
 //                    EditQuantityGiftDialog(mGift, onUpdateQuantityClick = { mQuantity ->
 //                        mGiftAdapter.onUpdateQuantity(mGift, mQuantity, position)
 //                    })
 //                dialog.show(requireActivity().supportFragmentManager, dialog.tag)
-            })
+                })
         _taskId?.let {
             viewModel.fetchGifts(taskId = it)
         }
@@ -67,11 +69,11 @@ class ReceiveGiftFragment : BaseFragment<FragmentImportGiftBinding, ReceiveGiftV
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val gifts = mGiftAdapter.getSelectItems()
             if (gifts.size == 0) {
                 requireContext().showMessageDialog(message = "Vui lòng chọn quà tặng")
@@ -81,28 +83,27 @@ class ReceiveGiftFragment : BaseFragment<FragmentImportGiftBinding, ReceiveGiftV
                 viewModel.receiveGift(taskId = it, gift = gifts)
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         setUpSearchStateFlow()
 
         viewModel.updateGift.observe(viewLifecycleOwner, Observer {
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             requireContext().showMessageDialog(message = it) {
                                 findNavController().navigateUp()
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -112,37 +113,41 @@ class ReceiveGiftFragment : BaseFragment<FragmentImportGiftBinding, ReceiveGiftV
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             mGiftAdapter.addAll(it as ArrayList<GiftResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
-        rv_product.apply {
+        binding.rvProduct.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mGiftAdapter
         }
     }
 
     private fun setUpSearchStateFlow() {
-        val iconSearchClose = sv_product?.findViewById<ImageView>(R.id.search_close_btn)
+        val iconSearchClose =
+            binding.svProduct.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
         iconSearchClose?.setSingleClick {
-            val et = sv_product?.findViewById(com.crayon.fieldapp.R.id.search_src_text) as EditText
+            val et =
+                binding.svProduct.findViewById(androidx.appcompat.R.id.search_src_text) as EditText
             et.setText("")
-            sv_product?.setQuery("", false)
+            binding.svProduct.setQuery("", false)
             mGiftAdapter.refresh()
             Utils.hideKeyboard(requireActivity())
         }
 
-        sv_product?.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
+        binding.svProduct.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 mGiftAdapter.getFilter().filter(query.toString())
@@ -156,7 +161,7 @@ class ReceiveGiftFragment : BaseFragment<FragmentImportGiftBinding, ReceiveGiftV
         })
 
         GlobalScope.launch {
-            sv_product?.let {
+            binding.svProduct.let {
                 it.getQueryTextChangeStateFlow()
                     .debounce(1000)
                     .filter { query ->

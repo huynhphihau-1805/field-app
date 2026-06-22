@@ -15,7 +15,6 @@ import com.crayon.fieldapp.ui.screen.monitor.listProject.ListProjectFragment
 import com.crayon.fieldapp.ui.screen.monitor.listProject.ListProjectViewModel
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.fragment_manage_attendance.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ManageAttendanceFragment :
@@ -51,7 +50,7 @@ class ManageAttendanceFragment :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }

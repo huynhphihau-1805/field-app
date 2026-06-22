@@ -15,13 +15,12 @@ import com.crayon.fieldapp.ui.base.BaseViewModel
 import com.crayon.fieldapp.ui.screen.info.model.UpdateInfoForm
 import com.crayon.fieldapp.utils.Resource
 import com.crayon.fieldapp.utils.Status
+import com.example.moviedb.utils.toRequestBody
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class InfoViewModel(
@@ -49,8 +48,8 @@ class InfoViewModel(
     fun updateIdFront(avatar: Uri) = viewModelScope.launch(dispatchers.main) {
         val avatarFile = File(avatar.path)
 
-        val requestBody: RequestBody =
-            avatarFile!!.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val type = MediaType.get("multipart/form-data")
+        val requestBody: RequestBody = RequestBody.create(type, avatarFile)
         val avatarFileUpload: MultipartBody.Part =
             MultipartBody.Part.createFormData(
                 "identification_image_front",
@@ -79,8 +78,8 @@ class InfoViewModel(
     fun updateIdBack(fullBody: Uri) = viewModelScope.launch(dispatchers.main) {
         val fullBodyFile = File(fullBody.path)
 
-        val requestBody: RequestBody =
-            fullBodyFile!!.asRequestBody("multipart/form-data".toMediaTypeOrNull())
+        val type = MediaType.get("multipart/form-data")
+        val requestBody: RequestBody = RequestBody.create(type, fullBodyFile)
         val fullBodyFileUpload: MultipartBody.Part =
             MultipartBody.Part.createFormData(
                 "identification_image_back",
@@ -137,7 +136,7 @@ class InfoViewModel(
                 _info.value = it
                 if (it.status == Status.ERROR) {
                     it.message?.let { error ->
-                        viewModelScope?.launch {
+                        viewModelScope.launch {
                             onLoadFail(error)
                         }
                     }

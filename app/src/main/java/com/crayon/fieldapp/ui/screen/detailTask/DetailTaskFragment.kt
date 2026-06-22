@@ -1,9 +1,16 @@
 package com.crayon.fieldapp.ui.screen.detailTask
 
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -19,12 +26,13 @@ import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.adapter.MediaData
 import com.crayon.fieldapp.ui.screen.detailTask.base.DetailTaskViewModel
 import com.crayon.fieldapp.ui.screen.imageDialog.EditNoteDialog
+import com.crayon.fieldapp.utils.BitmapUtils
 import com.crayon.fieldapp.utils.FileManager
 import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.loadImage
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_task.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -43,6 +51,7 @@ class DetailTaskFragment :
     private lateinit var typeRecord: String
     private var taskResponse: TaskResponse? = null
     private lateinit var mediaAdapter: MediaAdapter
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,30 +81,155 @@ class DetailTaskFragment :
         viewModel.getDetailTask(taskId)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.rvImages.setLayoutManager(GridLayoutManager(requireContext(), 2))
+        binding.rvImages.setHasFixedSize(true)
+        binding.rvImages.setAdapter(mediaAdapter)
+
+
+        binding.imbIcBack.setSingleClick {
+            findNavController().navigateUp()
+        }
+
+        binding.imbAttachment.setSingleClick {
+            taskResponse?.let { mTaskResponse ->
+                val taskString = Gson().toJson(mTaskResponse).toString()
+                val bundle = bundleOf("task" to taskString)
+                findNavController().navigate(
+                    R.id.action_detailTaskFragment_to_detailAttachmentFragment,
+                    bundle
+                )
+            }
+
+        }
+
+        binding.imbIcFilter.setSingleClick {
+            if (mediaAdapter.itemCount > 1) {
+                context?.showMessageDialog("Mỗi lần chỉ được upload 1 ảnh/Video")
+            } else {
+                if (mediaAdapter.itemCount != 0) {
+                    mediaAdapter.showProgress(true)
+                    val listNote = mediaAdapter.getNotes()
+                    taskResponse?.let { mTaskResponse ->
+                        viewModel.upLoadTask(mTaskResponse, mediaAdapter.getData(), listNote)
+                    }
+                } else {
+                    context?.showMessageDialog("Bạn chưa có chụp ảnh")
+                }
+            }
+        }
+
+        binding.imgPicture.setSingleClick {
+            typeRecord = "image"
+            taskResponse?.let { mTaskResponse ->
+                val taskType = mTaskResponse.type.id!!.toInt()
+                if (isVerifyLocation(taskType)) {
+                    if (viewModel.verifyLocation(mTaskResponse)) {
+                        // TODO
+                        if (isTakeImageOnlyFromCamera(taskType)) {
+                            openCamera()
+                        } else {
+                            openCamera()
+                        }
+                    } else {
+                        val dialog = TimeKeepingDialog()
+                        val bundle = Bundle()
+                        viewModel.currentLocation.let {
+                            bundle.putDouble("current_lat", it.latitude)
+                            bundle.putDouble("current_long", it.longitude)
+
+                        }
+                        bundle.putDouble("store_lat", mTaskResponse.store!!.lat)
+                        bundle.putDouble("store_long", mTaskResponse.store!!.lng)
+                        bundle.putString("distant", viewModel.strDistant)
+                        dialog.arguments = bundle
+                        dialog.show(childFragmentManager, dialog.tag)
+                    }
+
+                } else {
+                    // TODO
+                    if (isTakeImageOnlyFromCamera(taskType)) {
+                        openCamera()
+                    } else {
+                        openCamera()
+                    }
+                }
+            }
+
+        }
+
+        binding.imgVideo.setSingleClick {
+            typeRecord = "video"
+            taskResponse?.let { mTaskResponse ->
+                val taskType = mTaskResponse.type!!.id!!.toInt()
+                if (isVerifyLocation(taskType)) {
+                    if (viewModel.verifyLocation(mTaskResponse)) {
+                        openVideoCamera()
+                    } else {
+                        val dialog = TimeKeepingDialog()
+                        val bundle = Bundle()
+                        viewModel.currentLocation?.let {
+                            bundle.putDouble("current_lat", it.latitude)
+                            bundle.putDouble("current_long", it.longitude)
+
+                        }
+                        bundle.putDouble("store_lat", mTaskResponse!!.store!!.lat)
+                        bundle.putDouble("store_long", mTaskResponse!!.store!!.lng)
+                        bundle.putString("distant", viewModel.strDistant)
+                        dialog.arguments = bundle
+                        dialog.show(childFragmentManager, dialog.tag)
+                    }
+                } else {
+                    openVideoCamera()
+                }
+            }
+
+        }
+
         findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<String>("url")
             ?.observe(viewLifecycleOwner, Observer { result ->
-                showImage(result)
+                if (!mediaAdapter.contains(result)) {
+                    showImage(result)
+                }
             })
+
+        viewModel.title.observe(viewLifecycleOwner, { data ->
+            binding.tvTitle.text = data
+        })
+
+        viewModel.isRecordVideo.observe(viewLifecycleOwner, { isShow ->
+            if(isShow){
+                binding.imgVideo.visibility = View.VISIBLE
+            } else {
+                binding.imgVideo.visibility = View.GONE
+            }
+        })
+
+        viewModel.isRecordImage.observe(viewLifecycleOwner, { isShow ->
+            if(isShow){
+                binding.imgPicture.visibility = View.VISIBLE
+            } else {
+                binding.imgPicture.visibility = View.GONE
+            }
+        })
 
         viewModel.task.observe(viewLifecycleOwner, Observer {
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
-                        tv_title.text = it.data!!.type.name
+                        binding.pbLoading.visibility = View.GONE
                         taskResponse = it.data!!
                         taskResponse?.let { mTaskResponse ->
-                            showRecordMediaType(mTaskResponse.type!!.id!!.toInt())
                             showSubTitle(mTaskResponse.type!!.id!!.toInt())
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -123,162 +257,17 @@ class DetailTaskFragment :
                 }
             })
         }
+
+        galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                val selectedImageUri = data?.data
+                val path = FileManager.getPath(requireContext(), selectedImageUri)
+                showImage(path)
+            }
+        }
+
     }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        rv_images.setLayoutManager(GridLayoutManager(requireContext(), 2))
-        rv_images.setHasFixedSize(true)
-        rv_images.setAdapter(mediaAdapter)
-
-
-        imb_ic_back?.setSingleClick {
-            findNavController().navigateUp()
-        }
-
-        imb_attachment?.setSingleClick {
-            taskResponse?.let { mTaskResponse ->
-                val taskString = Gson().toJson(mTaskResponse).toString()
-                val bundle = bundleOf("task" to taskString)
-                findNavController().navigate(
-                    R.id.action_detailTaskFragment_to_detailAttachmentFragment,
-                    bundle
-                )
-            }
-
-        }
-
-        imb_ic_filter?.setSingleClick {
-            if (mediaAdapter.itemCount > 1) {
-                context?.showMessageDialog("Mỗi lần chỉ được upload 1 ảnh/Video")
-            } else {
-                if (mediaAdapter.itemCount != 0) {
-                    mediaAdapter.showProgress(true)
-                    var listNote = mediaAdapter.getNotes()
-                    taskResponse?.let { mTaskResponse ->
-                        viewModel.upLoadTask(mTaskResponse, mediaAdapter.getData(), listNote)
-                    }
-                } else {
-                    context?.showMessageDialog("Bạn chưa có chụp ảnh")
-                }
-            }
-        }
-
-        img_picture?.setSingleClick {
-            typeRecord = "image"
-            taskResponse?.let { mTaskResponse ->
-                val taskType = mTaskResponse.type!!.id!!.toInt()
-                if (isVerifyLocation(taskType)) {
-                    if (viewModel.verifyLocation(mTaskResponse)) {
-                        if (isTakeImageOnlyFromCamera(taskType)) {
-                            openCamera()
-                        } else {
-                            val getPhotoDialogFragment = GetPhotoDialogFragment()
-                            getPhotoDialogFragment.setListener(this)
-                            getPhotoDialogFragment.show(
-                                childFragmentManager,
-                                getPhotoDialogFragment.tag
-                            )
-                        }
-                    } else {
-                        val dialog = TimeKeepingDialog()
-                        val bundle = Bundle()
-                        viewModel.currentLocation?.let {
-                            bundle.putDouble("current_lat", it.latitude)
-                            bundle.putDouble("current_long", it.longitude)
-
-                        }
-                        bundle.putDouble("store_lat", mTaskResponse!!.store!!.lat)
-                        bundle.putDouble("store_long", mTaskResponse!!.store!!.lng)
-                        bundle.putString("distant", viewModel.strDistant)
-                        dialog.arguments = bundle
-                        dialog.show(childFragmentManager, dialog.tag)
-                    }
-
-                } else {
-                    if (isTakeImageOnlyFromCamera(taskType)) {
-                        openCamera()
-                    } else {
-                        val getPhotoDialogFragment = GetPhotoDialogFragment()
-                        getPhotoDialogFragment.setListener(this)
-                        getPhotoDialogFragment.show(
-                            childFragmentManager,
-                            getPhotoDialogFragment.tag
-                        )
-                    }
-                }
-            }
-
-        }
-
-        img_video?.setSingleClick {
-            typeRecord = "video"
-            taskResponse?.let { mTaskResponse ->
-                val taskType = mTaskResponse.type!!.id!!.toInt()
-                if (isVerifyLocation(taskType)) {
-                    if (viewModel.verifyLocation(mTaskResponse)) {
-                        openVideoCamera()
-                    } else {
-                        val dialog = TimeKeepingDialog()
-                        val bundle = Bundle()
-                        viewModel.currentLocation?.let {
-                            bundle.putDouble("current_lat", it.latitude)
-                            bundle.putDouble("current_long", it.longitude)
-
-                        }
-                        bundle.putDouble("store_lat", mTaskResponse!!.store!!.lat)
-                        bundle.putDouble("store_long", mTaskResponse!!.store!!.lng)
-                        bundle.putString("distant", viewModel.strDistant)
-                        dialog.arguments = bundle
-                        dialog.show(childFragmentManager, dialog.tag)
-                    }
-                } else {
-                    openVideoCamera()
-                }
-            }
-
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                CODE_REQUEST_GALLERY -> {
-                    var selectedImageUri = data!!.data
-                    val path = FileManager.getPath(requireContext(), selectedImageUri)
-                    showImage(path)
-                }
-            }
-        }
-    }
-
-    private fun showRecordMediaType(taskType: Int) {
-        when (taskType) {
-            TaskType.CHECK_LIST.value,
-            TaskType.VISIT_STORE.value,
-            TaskType.REPORT_CUSTOMER.value,
-            TaskType.TIME_KEEPING.value -> {
-                img_picture.visibility = View.VISIBLE
-                img_video.visibility = View.GONE
-            }
-            TaskType.SET_UP.value,
-            TaskType.UPDATE_STATUS.value,
-            TaskType.REPORT_COMPITETOR.value,
-            TaskType.REPORT_DAMAGED.value,
-            TaskType.CLEAN_UP.value,
-            TaskType.REPORT_VIOLATION.value,
-            TaskType.REPORT_END_SHIFT.value,
-            TaskType.COUNT.value,
-            TaskType.UPDATE_PRICE.value,
-            TaskType.COMPLETE_FIX.value -> {
-                img_picture.visibility = View.VISIBLE
-                img_video.visibility = View.VISIBLE
-            }
-        }
-    }
-
 
     private fun isTakeImageOnlyFromCamera(taskType: Int): Boolean {
         when (taskType) {
@@ -345,19 +334,19 @@ class DetailTaskFragment :
             TaskType.COUNT.value,
             TaskType.UPDATE_PRICE.value,
             TaskType.COMPLETE_FIX.value -> {
-                tv_sub_title.visibility = View.GONE
+                binding.tvSubTitle.visibility = View.GONE
             }
             TaskType.TIME_KEEPING.value -> {
-                tv_sub_title.visibility = View.VISIBLE
-                tv_sub_title.text = "Check In"
+                binding.tvSubTitle.visibility = View.VISIBLE
+                binding.tvSubTitle.text = "Check In"
                 taskResponse?.let {
                     it.attendances?.let { attendances ->
                         if (attendances.size == 0) {
-                            tv_sub_title.text = "Check In"
+                            binding.tvSubTitle.text = "Check In"
                         } else if (attendances.size == 1) {
-                            tv_sub_title.text = "Check Out"
+                            binding.tvSubTitle.text = "Check Out"
                         } else {
-                            tv_sub_title.text = "Đã chấm công"
+                            binding.tvSubTitle.text = "Đã chấm công"
                         }
                     }
                 }
@@ -380,7 +369,7 @@ class DetailTaskFragment :
     }
 
     private fun openVideoCamera() {
-        val bundle = bundleOf("isTakeVideo" to false)
+        val bundle = bundleOf("isTakeImage" to false)
         findNavController().navigate(R.id.action_global_CameraFragment, bundle)
     }
 
@@ -388,11 +377,10 @@ class DetailTaskFragment :
         val intent = Intent()
         intent.type = "image/*"
         intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(
-            Intent.createChooser(intent, "Select Picture"),
-            CODE_REQUEST_GALLERY
-        )
+        val chooserIntent = Intent.createChooser(intent, "Select Picture")
+        galleryLauncher.launch(chooserIntent)
     }
+
 
     companion object {
         const val CODE_REQUEST_GALLERY = 1
@@ -442,5 +430,4 @@ class DetailTaskFragment :
 
         }
     }
-
 }

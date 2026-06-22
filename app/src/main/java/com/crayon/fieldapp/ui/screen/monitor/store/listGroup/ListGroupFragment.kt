@@ -10,7 +10,6 @@ import com.crayon.fieldapp.databinding.FragmentListGroupBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.GroupStoreAdapter
 import com.crayon.fieldapp.utils.showConfirmDialog
-import kotlinx.android.synthetic.main.fragment_list_group.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListGroupFragment : BaseFragment<FragmentListGroupBinding, ListGroupViewModel>() {
@@ -43,7 +42,7 @@ class ListGroupFragment : BaseFragment<FragmentListGroupBinding, ListGroupViewMo
             }
         )
 
-        rv_group.apply {
+        binding.rvGroup.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }

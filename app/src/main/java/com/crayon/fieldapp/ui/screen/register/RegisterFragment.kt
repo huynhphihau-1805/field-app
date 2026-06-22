@@ -8,6 +8,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -23,12 +27,17 @@ import com.crayon.fieldapp.ui.base.adapter.GenderSPAdapter
 import com.crayon.fieldapp.ui.base.adapter.SimpleSPAdapter
 import com.crayon.fieldapp.ui.base.dialog.DatePickerSpinnerDialog
 import com.crayon.fieldapp.ui.base.dialog.getPhoto.GetPhotoDialogFragment
-import com.crayon.fieldapp.utils.*
-import kotlinx.android.synthetic.main.fragment_register.*
+import com.crayon.fieldapp.utils.CityUtils
+import com.crayon.fieldapp.utils.FileManager
+import com.crayon.fieldapp.utils.GlideApp
+import com.crayon.fieldapp.utils.Status
+import com.crayon.fieldapp.utils.setSingleClick
+import com.crayon.fieldapp.utils.showDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 
 class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel>(),
@@ -52,23 +61,167 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
     lateinit var currentCityAdapter: CityAdapter
     lateinit var currentDistrictAdapter: CityAdapter
     lateinit var districtAdapter: CityAdapter
-    private var avatarRef: Uri? = null
-    private var bodyRef: Uri? = null
-    private var idFrontRef: Uri? = null
-    private var idBackRef: Uri? = null
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
+    private var avatarRef: String? = null
+    private var bodyRef: String? = null
+    private var idBackRef: String? = null
+    private var idFrontRef: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        galleryLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK && result.data != null) {
+                    var selectedImageUri = result!!.data
+                    selectedImageUri?.let {
+                        val path = FileManager.getPath(requireContext(), selectedImageUri.data)
+                        val file = viewModel.createFile(path, 100)
+                        file?.let {
+                            when (tyeImage) {
+                                "avatar" -> {
+                                    avatarRef = it.absolutePath
+                                    avatarRef?.let {
+                                        showAvatar(binding.imgAvatar, it)
+                                        viewModel.setAvatarRef(it)
+                                    }
+                                }
+
+                                "full_body" -> {
+                                    bodyRef = it.absolutePath
+                                    bodyRef?.let {
+                                        showImage(binding.imgFullBody, it)
+                                        viewModel.setBodyRef(it)
+                                    }
+
+                                }
+
+                                "id_back" -> {
+                                    idBackRef = it.absolutePath
+                                    idBackRef?.let {
+                                        showImage(binding.imgIdBack, it)
+                                        viewModel.setIdBackRef(it)
+                                    }
+                                }
+                                else -> {
+                                    idFrontRef = it.absolutePath
+                                    idFrontRef?.let {
+                                        showImage(binding.imgIdFront, it)
+                                        viewModel.setIdFrontRef(it)
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    handleErrorMessage("Có lỗi xảy ra")
+                }
+            }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         viewModel.apply {
+
+            firstName.observe(viewLifecycleOwner, { data ->
+                binding.edtFirstName.setText(data)
+            })
+
+            lastname.observe(viewLifecycleOwner, { data ->
+                binding.edtLastName.setText(data)
+            })
+
+            birthday.observe(viewLifecycleOwner, { data ->
+                binding.txtBirthDay.setText(data)
+            })
+
+            email.observe(viewLifecycleOwner, { data ->
+                binding.edtEmail.setText(data)
+            })
+
+            password.observe(viewLifecycleOwner, { data ->
+                binding.edtPassword.setText(data)
+            })
+
+            confirmPassword.observe(viewLifecycleOwner, { data ->
+                binding.edtConfirmPassword.setText(data)
+            })
+
+            phone.observe(viewLifecycleOwner, { data ->
+                binding.edtPhone.setText(data)
+            })
+
+            tax.observe(viewLifecycleOwner, { data ->
+                binding.edtTax.setText(data)
+            })
+
+            bankNumber.observe(viewLifecycleOwner, { data ->
+                binding.edtBankNumber.setText(data)
+            })
+
+            bankName.observe(viewLifecycleOwner, { data ->
+                binding.spBankName.setSelection(data)
+            })
+            bankNumber.observe(viewLifecycleOwner, { data ->
+                binding.edtBankNumber.setText(data)
+            })
+            bankBrand.observe(viewLifecycleOwner, { data ->
+                binding.edtBrand.setText(data)
+            })
+            heigth.observe(viewLifecycleOwner, { data ->
+                binding.edtHeight.setText(data)
+            })
+            weigth.observe(viewLifecycleOwner, { data ->
+                binding.edtWeight.setText(data)
+            })
+            id.observe(viewLifecycleOwner, { data ->
+                binding.edtId.setText(data)
+            })
+            city.observe(viewLifecycleOwner, { data ->
+                binding.spCity.setSelection(data)
+            })
+            temporaryCity.observe(viewLifecycleOwner, { data ->
+                binding.spCurrentCity.setSelection(data)
+            })
+            district.observe(viewLifecycleOwner, { data ->
+                binding.spDistrict.setSelection(data)
+            })
+            temporaryDistrict.observe(viewLifecycleOwner, { data ->
+                binding.spCurrentDistrict.setSelection(data)
+            })
+
+            avatarRefData.observe(viewLifecycleOwner, Observer {
+                Log.d("AAAHAU", "avatarRefData: " + it)
+                avatarRef = it
+                showAvatar(binding.imgAvatar, it)
+            })
+
+            bodyRefData.observe(viewLifecycleOwner, Observer {
+                Log.d("AAAHAU", "bodyRefData: " + it)
+                bodyRef = it
+                showImage(binding.imgFullBody, it)
+            })
+
+            idBackRefData.observe(viewLifecycleOwner, Observer {
+                Log.d("AAAHAU", "idBackRefData: " + it)
+                idBackRef = it
+                showImage(binding.imgIdBack, it)
+            })
+
+            idFrontRefData.observe(viewLifecycleOwner, Observer {
+                Log.d("AAAHAU", "idFrontRefData: " + it)
+                idFrontRef = it
+                showImage(binding.imgIdFront, it)
+            })
+
             result.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         requireContext().showDialog(
@@ -79,6 +232,7 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                             }
                         )
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
@@ -92,50 +246,38 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 val file = File(result)
                 when (tyeImage) {
                     "avatar" -> {
-                        val options: RequestOptions = RequestOptions()
-                            .centerCrop()
-                            .circleCrop()
-                            .placeholder(R.mipmap.ic_launcher_round)
-                            .error(R.mipmap.ic_launcher_round)
-                        GlideApp.with(requireContext()).load(result).apply(options).into(img_avatar)
-                        avatarRef = Uri.fromFile(file)
+                        avatarRef = file.absolutePath.toString()
+                        avatarRef?.let {
+                            showAvatar(binding.imgAvatar, it)
+                            viewModel.setAvatarRef(it)
+                        }
                     }
+
                     "full_body" -> {
-                        val options: RequestOptions = RequestOptions()
-                            .centerCrop()
-                            .fitCenter()
-                            .placeholder(R.mipmap.ic_launcher_round)
-                            .error(R.mipmap.ic_launcher_round)
-                        GlideApp.with(requireContext()).load(result).apply(options)
-                            .into(img_full_body)
-                        bodyRef = Uri.fromFile(file)
+                        bodyRef = file.absolutePath.toString()
+                        bodyRef?.let {
+                            showImage(binding.imgFullBody, it)
+                            viewModel.setBodyRef(it)
+                        }
                     }
+
                     "id_back" -> {
-                        val options: RequestOptions = RequestOptions()
-                            .centerCrop()
-                            .fitCenter()
-                            .placeholder(R.mipmap.ic_launcher_round)
-                            .error(R.mipmap.ic_launcher_round)
-                        GlideApp.with(requireContext()).load(result).apply(options)
-                            .into(img_id_back)
-                        idBackRef = Uri.fromFile(file)
+                        idBackRef = file.absolutePath.toString()
+                        idBackRef?.let {
+                            showImage(binding.imgIdBack, it)
+                            viewModel.setIdBackRef(it)
+                        }
                     }
+
                     "id_front" -> {
-                        val options: RequestOptions = RequestOptions()
-                            .centerCrop()
-                            .fitCenter()
-                            .placeholder(R.mipmap.ic_launcher_round)
-                            .error(R.mipmap.ic_launcher_round)
-                        GlideApp.with(requireContext()).load(result).apply(options)
-                            .into(img_id_front)
-                        idFrontRef = Uri.fromFile(file)
+                        idFrontRef = file.absolutePath.toString()
+                        idFrontRef?.let {
+                            showImage(binding.imgIdFront, it)
+                            viewModel.setIdFrontRef(it)
+                        }
                     }
                 }
             })
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         cityAdapter = CityAdapter(requireContext(), arrayListOf())
         currentCityAdapter = CityAdapter(requireContext(), arrayListOf())
@@ -148,20 +290,20 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
             banks.add(SimpleModel(it.name, it.id))
         }
         bankAdapter = SimpleSPAdapter(requireContext(), banks)
-        sp_bank_name.setAdapter(bankAdapter)
+        binding.spBankName.setAdapter(bankAdapter)
 
         // Gender
         genderAdapter = GenderSPAdapter(Gender.values(), requireContext())
-        sp_gender.adapter = genderAdapter
+        binding.spGender.adapter = genderAdapter
 
         // City
         val cities = CityUtils.getAllCity(requireContext())
         cityAdapter.setData(cities)
         currentCityAdapter.setData(cities)
-        sp_city.setAdapter(cityAdapter)
-        sp_current_city.setAdapter(cityAdapter)
+        binding.spCity.setAdapter(cityAdapter)
+        binding.spCurrentCity.setAdapter(cityAdapter)
 
-        sp_city?.onItemSelectedListener = object :
+        binding.spCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -170,14 +312,15 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 parent: AdapterView<*>,
                 view: View?, position: Int, id: Long
             ) {
+                viewModel.setCity(position)
                 cityCode = cityAdapter.getItem(position).id
                 val districts = CityUtils.getAllDistrictOfCity(requireContext(), cityCode!!)
                 districtAdapter.setData(districts)
-                sp_district.setAdapter(districtAdapter)
+                binding.spDistrict.setAdapter(districtAdapter)
             }
         }
 
-        sp_current_city?.onItemSelectedListener = object :
+        binding.spCurrentCity.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -186,14 +329,15 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 parent: AdapterView<*>,
                 view: View?, position: Int, id: Long
             ) {
+                viewModel.setTemporaryCity(position)
                 currentCityCode = currentCityAdapter.getItem(position).id
                 val districts = CityUtils.getAllDistrictOfCity(requireContext(), currentCityCode!!)
                 currentDistrictAdapter.setData(districts)
-                sp_current_district.setAdapter(currentDistrictAdapter)
+                binding.spCurrentDistrict.setAdapter(currentDistrictAdapter)
             }
         }
 
-        sp_district?.onItemSelectedListener = object :
+        binding.spDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -202,13 +346,14 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 parent: AdapterView<*>,
                 view: View?, position: Int, id: Long
             ) {
+                viewModel.setDistrict(position)
                 if (districtAdapter.items.size != 0) {
                     districtCode = districtAdapter.getItem(position).id
                 }
             }
         }
 
-        sp_current_district?.onItemSelectedListener = object :
+        binding.spCurrentDistrict.onItemSelectedListener = object :
             AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
@@ -217,79 +362,73 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 parent: AdapterView<*>,
                 view: View?, position: Int, id: Long
             ) {
+                viewModel.setTemporaryCity(position)
                 if (currentDistrictAdapter.items.size != 0) {
                     currentDistrictCode = currentDistrictAdapter.getItem(position).id
                 }
             }
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_tax.setOnClickListener {
+        binding.btnTax.setOnClickListener {
             startActivity(Intent(Intent.ACTION_VIEW).apply {
                 setData(Uri.parse("http://tracuunnt.gdt.gov.vn/tcnnt/mstcn.jsp"))
             })
         }
 
-        img_avatar?.setSingleClick {
+        binding.imgAvatar.setSingleClick {
             tyeImage = "avatar"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            openCamera()
         }
 
-        img_full_body?.setSingleClick {
+        binding.imgFullBody.setSingleClick {
             tyeImage = "full_body"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            openCamera()
         }
 
-        img_id_front?.setSingleClick {
+        binding.imgIdFront.setSingleClick {
             tyeImage = "id_front"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            openCamera()
         }
 
-        img_id_back?.setSingleClick {
+        binding.imgIdBack.setSingleClick {
             tyeImage = "id_back"
-            val getPhotoDialogFragment = GetPhotoDialogFragment()
-            getPhotoDialogFragment.setListener(this)
-            getPhotoDialogFragment.show(childFragmentManager, getPhotoDialogFragment.getTag())
+            openCamera()
         }
 
-        txt_birth_day?.setSingleClick {
+        binding.txtBirthDay.setSingleClick {
             val datepicker = DatePickerSpinnerDialog()
             datepicker.setListener(this)
             datepicker.show(childFragmentManager, datepicker.getTag())
         }
 
-        imgRegister?.setSingleClick {
-            val firstName = edt_first_name.text.toString().trim()
-            val lastName = edt_last_name.text.toString().trim()
-            val email = edt_email.text.toString().trim()
-            val password = edt_password.text.toString().trim()
-            val confirmPassword = edt_confirm_password.text.toString().trim()
-            val gender = genderAdapter.getItem(sp_gender.selectedItemPosition).value
-            val birthDate = txt_birth_day.text.toString().trim()
-            val phone = edt_phone.text.toString().trim()
-            val bankBrand = edt_brand.text.toString().trim()
-            val bankNumber = edt_bank_number.text.toString().trim()
-            val bankName = bankAdapter.getItem(sp_bank_name.selectedItemPosition).name.trim()
-            val id = edt_id.text.toString().trim()
-            val tax = edt_tax.text.toString().trim()
-            val height = edt_height.text.toString().trim()
-            val weight = edt_weight.text.toString().trim()
-            val city = cityAdapter.getItem(sp_city.selectedItemPosition).id
-            val current_city = currentCityAdapter.getItem(sp_current_city.selectedItemPosition).id
-            val district = districtAdapter.getItem(sp_district.selectedItemPosition).id
+        binding.imgRegister.setSingleClick {
+            val firstName = binding.edtFirstName.text.toString().trim()
+            val lastName = binding.edtLastName.text.toString().trim()
+            val email = binding.edtEmail.text.toString().trim()
+            val password = binding.edtPassword.text.toString().trim()
+            val confirmPassword = binding.edtConfirmPassword.text.toString().trim()
+            val gender = genderAdapter.getItem(binding.spGender.selectedItemPosition).value
+            val birthDate = binding.txtBirthDay.text.toString().trim()
+            val phone = binding.edtPhone.text.toString().trim()
+            val bankBrand = binding.edtBrand.text.toString().trim()
+            val bankNumber = binding.edtBankNumber.text.toString().trim()
+            val bankName = bankAdapter.getItem(binding.spBankName.selectedItemPosition).name.trim()
+            val id = binding.edtId.text.toString().trim()
+            val tax = binding.edtTax.text.toString().trim()
+            val height = binding.edtHeight.text.toString().trim()
+            val weight = binding.edtWeight.text.toString().trim()
+            val city = cityAdapter.getItem(binding.spCity.selectedItemPosition).id
+            val current_city =
+                currentCityAdapter.getItem(binding.spCurrentCity.selectedItemPosition).id
+            val district = districtAdapter.getItem(binding.spDistrict.selectedItemPosition).id
             val current_district =
-                currentDistrictAdapter.getItem(sp_current_district.selectedItemPosition).id
-            val address = edt_address.text.toString()
-            val current_address = edt_current_address.text.toString()
+                currentDistrictAdapter.getItem(binding.spCurrentDistrict.selectedItemPosition).id
+            val address = binding.edtAddress.text.toString()
+            val current_address = binding.edtCurrentAddress.text.toString()
 
             val userForm = UpdateProfileForm(
                 firstName = firstName,
@@ -323,11 +462,10 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
                 if (result.first) {
                     viewModel.register(userForm)
                 } else {
-                    handleErrorMessage(result.second)
+                    Toast.makeText(requireContext(), result.second, Toast.LENGTH_LONG).show()
                 }
             }
         }
-
     }
 
     override fun selectFromGallery() {
@@ -361,71 +499,36 @@ class RegisterFragment : BaseFragment<FragmentRegisterBinding, RegisterViewModel
     private fun updateBirthDay() {
         val myFormat = "yyyy-MM-dd"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
-        txt_birth_day.text = sdf.format(calendar.time).toString()
+        binding.txtBirthDay.text = sdf.format(calendar.time).toString()
+        viewModel.setBirthDay(sdf.format(calendar.time).toString())
     }
 
     private fun openGallery() {
         val intent = Intent()
         intent.type = "image/*"
         intent.action = Intent.ACTION_GET_CONTENT
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), CODE_REQUEST_GALLERY)
+        val chooserIntent = Intent.createChooser(intent, "Select Picture")
+        galleryLauncher.launch(chooserIntent)
     }
 
+    fun showAvatar(holder: ImageView, data: String) {
+        val options: RequestOptions = RequestOptions()
+            .centerCrop()
+            .circleCrop()
+            .placeholder(R.mipmap.ic_launcher_round)
+            .error(R.mipmap.ic_launcher_round)
+        GlideApp.with(requireContext()).load(data).apply(options)
+            .into(holder)
+    }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode == RESULT_OK && null != data) {
-            when (requestCode) {
-                CODE_REQUEST_GALLERY -> {
-                    var selectedImageUri = data.data
-                    val path = FileManager.getPath(requireContext(), selectedImageUri)
-                    val file = File(path)
-                    when (tyeImage) {
-                        "avatar" -> {
-                            val options: RequestOptions = RequestOptions()
-                                .centerCrop()
-                                .circleCrop()
-                                .placeholder(R.mipmap.ic_launcher_round)
-                                .error(R.mipmap.ic_launcher_round)
-                            GlideApp.with(requireContext()).load(selectedImageUri).apply(options)
-                                .into(img_avatar)
-                            avatarRef = Uri.fromFile(file)
-                        }
-                        "full_body" -> {
-                            val options: RequestOptions = RequestOptions()
-                                .centerCrop()
-                                .fitCenter()
-                                .placeholder(R.mipmap.ic_launcher_round)
-                                .error(R.mipmap.ic_launcher_round)
-                            GlideApp.with(requireContext()).load(selectedImageUri).apply(options)
-                                .into(img_full_body)
-                            bodyRef = Uri.fromFile(file)
-                        }
-                        "id_back" -> {
-                            val options: RequestOptions = RequestOptions()
-                                .centerCrop()
-                                .fitCenter()
-                                .placeholder(R.mipmap.ic_launcher_round)
-                                .error(R.mipmap.ic_launcher_round)
-                            GlideApp.with(requireContext()).load(selectedImageUri).apply(options)
-                                .into(img_id_back)
-                            idBackRef = Uri.fromFile(file)
-                        }
-                        "id_front" -> {
-                            val options: RequestOptions = RequestOptions()
-                                .centerCrop()
-                                .fitCenter()
-                                .placeholder(R.mipmap.ic_launcher_round)
-                                .error(R.mipmap.ic_launcher_round)
-                            GlideApp.with(requireContext()).load(selectedImageUri).apply(options)
-                                .into(img_id_front)
-                            idFrontRef = Uri.fromFile(file)
-                        }
-                    }
-                }
-            }
-        } else {
-            handleErrorMessage("Có lỗi xảy ra")
-        }
+    fun showImage(holder: ImageView, path: String) {
+        val options: RequestOptions = RequestOptions()
+            .centerCrop()
+            .fitCenter()
+            .placeholder(R.mipmap.ic_launcher_round)
+            .error(R.mipmap.ic_launcher_round)
+        GlideApp.with(requireContext()).load(path).apply(options)
+            .into(holder)
     }
 
     companion object {

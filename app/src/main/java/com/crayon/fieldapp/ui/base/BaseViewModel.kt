@@ -1,9 +1,9 @@
 package com.crayon.fieldapp.ui.base
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.crayon.fieldapp.data.local.pref.AppPrefs
 import com.crayon.fieldapp.data.local.pref.PrefHelper
 import com.crayon.fieldapp.data.remote.convertToBaseException
 import com.crayon.fieldapp.data.repository.UserRepository
@@ -12,8 +12,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -28,11 +28,9 @@ abstract class BaseViewModel : ViewModel(), KoinComponent {
     val errorMessage = SingleLiveEvent<String>()
 
     // optional flags
-    val noInternetConnectionEvent = SingleLiveEvent<Unit>()
-    val tokenExpiredEvent = SingleLiveEvent<Unit>()
-    val connectTimeoutEvent = SingleLiveEvent<Unit>()
-    val forceUpdateAppEvent = SingleLiveEvent<Unit>()
-    val serverMaintainEvent = SingleLiveEvent<Unit>()
+    val noInternetConnectionEvent = SingleLiveEvent<Boolean>()
+    val tokenExpiredEvent = SingleLiveEvent<Boolean>()
+    val connectTimeoutEvent = SingleLiveEvent<Boolean>()
 
     // exception handler for coroutine
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
@@ -49,12 +47,13 @@ abstract class BaseViewModel : ViewModel(), KoinComponent {
             when (throwable) {
                 // case no internet connection
                 is UnknownHostException -> {
-                    noInternetConnectionEvent.call()
+                    noInternetConnectionEvent.value = true
                 }
                 // case request time out
                 is SocketTimeoutException -> {
-                    connectTimeoutEvent.call()
+                    connectTimeoutEvent.value = true
                 }
+
                 else -> {
                     // convert throwable to base exception to get error information
                     val baseException = convertToBaseException(throwable)
@@ -62,20 +61,21 @@ abstract class BaseViewModel : ViewModel(), KoinComponent {
                         HttpURLConnection.HTTP_UNAUTHORIZED -> {
                             refreshToken(appPrefs.getRefreshToken().toString())
                         }
+
                         HttpURLConnection.HTTP_INTERNAL_ERROR, HttpURLConnection.HTTP_BAD_REQUEST -> {
-                            errorMessage.value = baseException.serverErrorResponse?.message
+                            errorMessage.value = baseException.serverErrorResponse?.message ?: "Unknown error occurred"
                         }
+
                         else -> {
                             val invalidParam = baseException.serverErrorResponse?.validations
                             if (invalidParam != null) {
-                                errorMessage.value = invalidParam.get(0).message
+                                errorMessage.value = invalidParam.get(0).message ?: "Unknown error occurred"
                             } else {
                                 val errorTmpMessage = baseException.serverErrorResponse?.message
                                 if (errorTmpMessage.isNullOrEmpty()) {
-                                    errorMessage.value =
-                                        "Vui lòng thử lại"
+                                    errorMessage.value = "Vui lòng thử lại"
                                 } else {
-                                    errorMessage.value = errorTmpMessage
+                                    errorMessage.value = errorTmpMessage ?: "Unknown error occurred"
                                 }
 
                             }
@@ -94,7 +94,7 @@ abstract class BaseViewModel : ViewModel(), KoinComponent {
                 appPrefs.setToken("Bearer " + res.token.toString())
                 appPrefs.setRefreshToken(res.refresh_token.toString())
             } catch (e: Exception) {
-                tokenExpiredEvent.call()
+                tokenExpiredEvent.value = true
             }
         }
     }

@@ -7,7 +7,6 @@ import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentDetailNotificationBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.utils.setSingleClick
-import kotlinx.android.synthetic.main.fragment_detail_notification.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailNotificationFragment :
@@ -28,17 +27,8 @@ class DetailNotificationFragment :
             fetchDetailUser("1")
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
     }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        viewModel.apply {
-
-        }
-    }
-
 }

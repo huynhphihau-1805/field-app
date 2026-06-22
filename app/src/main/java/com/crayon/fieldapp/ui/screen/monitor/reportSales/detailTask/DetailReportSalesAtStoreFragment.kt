@@ -2,7 +2,6 @@ package com.crayon.fieldapp.ui.screen.monitor.reportSales.detailTask
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -17,7 +16,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.formatStartEndFullDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_report_sales_at_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailReportSalesAtStoreFragment() :
@@ -55,36 +53,36 @@ class DetailReportSalesAtStoreFragment() :
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        imb_ic_back.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().popBackStack()
         }
 
         taskResponse?.let {
             it.project?.let {
-                txt_project_name?.text = it.name.toString()
+                binding.txtProjectName.text = it.name.toString()
             }
             it.store?.let {
-                txt_address?.text = it.address.toString()
-                tv_title?.text = it.name.toString()
+                binding.txtAddress.text = it.address.toString()
+                binding.tvTitle.text = it.name.toString()
             }
             it.job?.let {
                 if (it.startTime != null && it.endTime != null) {
-                    txt_time?.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
+                    binding.txtTime.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
                 }
             }
 
             it.status?.let {
                 if (it.equals("Processing")) {
-                    txt_staus?.text = "Đang chạy"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đang chạy"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorAccent,
                             null
                         )
                     )
                 } else {
-                    txt_staus?.text = "Đã đóng"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đã đóng"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorGray,
                             null
@@ -97,32 +95,33 @@ class DetailReportSalesAtStoreFragment() :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
-                    Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
-                        it.data?.let {
-                            txt_num_customer?.text = it.size.toString() + " đơn hàng"
-                            if (it.size == 0) {
-                                rl_empty.visibility = View.VISIBLE
-                                rv_order.visibility = View.GONE
-                            } else {
 
-                                rl_empty.visibility = View.GONE
-                                rv_order.visibility = View.VISIBLE
+                    Status.SUCCESS -> {
+                        binding.pbLoading.visibility = View.GONE
+                        it.data?.let {
+                            binding.txtNumCustomer.text = it.size.toString() + " đơn hàng"
+                            if (it.size == 0) {
+                                binding.rlEmpty.visibility = View.VISIBLE
+                                binding.rvOrder.visibility = View.GONE
+                            } else {
+                                binding.rlEmpty.visibility = View.GONE
+                                binding.rvOrder.visibility = View.VISIBLE
                                 mOrderAdapter?.addAll(it as ArrayList<OrderResponse>)
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
 
 
-        rv_order.apply {
+        binding.rvOrder.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mOrderAdapter
         }

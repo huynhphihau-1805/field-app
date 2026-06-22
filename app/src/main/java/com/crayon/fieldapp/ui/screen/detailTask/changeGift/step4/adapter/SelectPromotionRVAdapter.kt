@@ -2,7 +2,6 @@ package com.crayon.fieldapp.ui.screen.detailTask.changeGift.step4.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,72 +13,78 @@ import com.crayon.fieldapp.data.remote.request.ProjectProductRequest
 import com.crayon.fieldapp.data.remote.response.GiftResponse
 import com.crayon.fieldapp.data.remote.response.ProductResponse
 import com.crayon.fieldapp.data.remote.response.PromotionResponse
+import com.crayon.fieldapp.databinding.ItemGiftInfoBinding
+import com.crayon.fieldapp.databinding.ItemPromotionInfoBinding
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.adapter.GiftRVAdapter
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.adapter.PromotionRVAdapter
-import kotlinx.android.synthetic.main.item_gift_info.view.*
-import kotlinx.android.synthetic.main.item_promotion_info.view.*
 
-class SelectPromotionRVAdapter constructor(
+class SelectPromotionRVAdapter(
     val promotion: ArrayList<PromotionResponse>,
     val gifts: ArrayList<GiftResponse>,
     val context: Context,
     val onShowSelectProduct: (promotion: PromotionResponse) -> Unit = {},
     val onItemClick: (String) -> Unit = {}
-) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
     private lateinit var mPromotionRVAdapter: PromotionRVAdapter
     private lateinit var mGiftRVAdapter: GiftRVAdapter
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        when (viewType) {
+        return when (viewType) {
             R.layout.item_promotion_info -> {
-                val inflater = LayoutInflater.from(parent.context)
-                val view = inflater.inflate(R.layout.item_promotion_info, parent, false)
-                return PromotionItemViewHolder(view)
+                val binding = ItemPromotionInfoBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+                PromotionItemViewHolder(binding)
             }
+
             else -> {
-                val inflater = LayoutInflater.from(parent.context)
-                val view = inflater.inflate(R.layout.item_gift_info, parent, false)
-                return GiftItemViewHolder(view)
+                val binding =
+                    ItemGiftInfoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                GiftItemViewHolder(binding)
             }
         }
     }
 
-
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder is PromotionItemViewHolder) {
-            mPromotionRVAdapter = PromotionRVAdapter(
-                items = promotion,
-                context = context,
-                onCheckBoxSelect = { mPromotion, isChecked ->
-                    if (isChecked) {
-                        mPromotionRVAdapter.onSelectItem(mPromotion)
-                        onShowSelectProduct(mPromotion)
-                    } else {
-                        mPromotionRVAdapter.onUnSelectItem(mPromotion)
+        when (holder) {
+            is PromotionItemViewHolder -> {
+                mPromotionRVAdapter = PromotionRVAdapter(
+                    items = promotion,
+                    context = context,
+                    onCheckBoxSelect = { mPromotion, isChecked ->
+                        if (isChecked) {
+                            mPromotionRVAdapter.onSelectItem(mPromotion)
+                            onShowSelectProduct(mPromotion)
+                        } else {
+                            mPromotionRVAdapter.onUnSelectItem(mPromotion)
+                        }
+                    },
+                    onItemDeleteListener = { mPromotion ->
+                        mPromotionRVAdapter.onDeleteAllProduct(promotion = mPromotion)
+                    },
+                    onItemPlusListener = { mPromotion ->
+                        var quantity = mPromotion.quantity + 1
+                        mPromotionRVAdapter.onUpdateQuantity(mPromotion, quantity)
+                    },
+                    onItemMinusListener = { mPromotion ->
+                        var quantity = mPromotion.quantity - 1
+                        if (quantity <= 0) {
+                            quantity = 1
+                        }
+                        mPromotionRVAdapter.onUpdateQuantity(mPromotion, quantity)
                     }
-
-                }, onItemDeleteListener = { mPromotion ->
-                    mPromotionRVAdapter.onDeleteAllProduct(promotion = mPromotion)
-
-                }, onItemPlusListener = { mPromotion ->
-                    var quantity = mPromotion.quantity + 1
-                    mPromotionRVAdapter.onUpdateQuantity(mPromotion, quantity)
-                }, onItemMinusListener = { mPromotion ->
-                    var quantity = mPromotion.quantity - 1
-                    if (quantity <= 0) {
-                        quantity = 1
-                    }
-                    mPromotionRVAdapter.onUpdateQuantity(mPromotion, quantity)
-                })
-
-            holder.rvPromotion.apply {
-                layoutManager = LinearLayoutManager(context)
-                this.adapter = mPromotionRVAdapter
+                )
+                holder.binding.rvPromotion.apply {
+                    layoutManager = LinearLayoutManager(context)
+                    this.adapter = mPromotionRVAdapter
+                }
             }
-        } else {
-            mGiftRVAdapter =
-                GiftRVAdapter(
+
+            is GiftItemViewHolder -> {
+                mGiftRVAdapter = GiftRVAdapter(
                     items = gifts,
                     context = context,
                     onItemSelectedListener = { mGift, isChecked ->
@@ -99,10 +104,12 @@ class SelectPromotionRVAdapter constructor(
                     onItemPlusListener = { mGift ->
                         var quantity = mGift.selectQuantity + 1
                         mGiftRVAdapter.onUpdateQuantity(mGift, quantity)
-                    })
-            (holder as GiftItemViewHolder).rvGift.apply {
-                layoutManager = LinearLayoutManager(context)
-                this.adapter = mGiftRVAdapter
+                    }
+                )
+                holder.binding.rvGift.apply {
+                    layoutManager = LinearLayoutManager(context)
+                    this.adapter = mGiftRVAdapter
+                }
             }
         }
     }
@@ -114,14 +121,11 @@ class SelectPromotionRVAdapter constructor(
         }
     }
 
+    inner class PromotionItemViewHolder(val binding: ItemPromotionInfoBinding) :
+        RecyclerView.ViewHolder(binding.root)
 
-    inner class PromotionItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var rvPromotion: RecyclerView = view.rv_promotion
-    }
-
-    inner class GiftItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var rvGift: RecyclerView = view.rv_gift
-    }
+    inner class GiftItemViewHolder(val binding: ItemGiftInfoBinding) :
+        RecyclerView.ViewHolder(binding.root)
 
     fun addItems(mPromotion: ArrayList<PromotionResponse>, mGift: ArrayList<GiftResponse>) {
         promotion.clear()
@@ -134,22 +138,24 @@ class SelectPromotionRVAdapter constructor(
     fun addAllProduct(mPromotion: PromotionResponse, mProduct: ArrayList<ProductResponse>) {
         promotion.indexOfFirst { it.id.toString().equals(mPromotion.id) }.let { index ->
             if (index != -1) {
-                promotion.get(index).products.clear()
-                promotion.get(index).products.addAll(mProduct)
+                promotion[index].products.clear()
+                promotion[index].products.addAll(mProduct)
                 notifyItemChanged(0)
             }
         }
     }
 
     fun getSelectPromotions(): AddPromotionGiftRequest {
-        var mGifts = gifts.filter { it.isSelect == true }.map {
+        val mGifts = gifts.filter { it.isSelect == true }.map {
             ProjectGiftRequest(
                 quantity = it.selectQuantity,
                 giftId = it.id.toString()
             )
         } as ArrayList<ProjectGiftRequest>
-        var mPromotions = promotion.filter { it.isSelect == true }.map { mPromotion ->
-            AddPromotionRequest(promotionId = mPromotion.id.toString(),
+
+        val mPromotions = promotion.filter { it.isSelect == true }.map { mPromotion ->
+            AddPromotionRequest(
+                promotionId = mPromotion.id.toString(),
                 products = mPromotion.products.map { mProduct ->
                     ProjectProductRequest(
                         productId = mProduct.id.toString(),

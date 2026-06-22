@@ -24,7 +24,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_detail_customer.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailCustomerFragment :
@@ -41,9 +40,9 @@ class DetailCustomerFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        isEdit = requireArguments()?.getBoolean("isEdit")
-        _projectId = requireArguments()?.getString("projectId")
-        _taskId = requireArguments()?.getString("taskId")
+        isEdit = requireArguments().getBoolean("isEdit")
+        _projectId = requireArguments().getString("projectId")
+        _taskId = requireArguments().getString("taskId")
 
         val _customerJson = requireArguments()?.getString("customerInfo")
         _customerJson?.let {
@@ -152,17 +151,17 @@ class DetailCustomerFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
         if (isEdit) {
-            imb_ic_filter?.visibility = View.VISIBLE
+            binding.imbIcFilter.visibility = View.VISIBLE
         } else {
-            imb_ic_filter?.visibility = View.INVISIBLE
+            binding.imbIcFilter.visibility = View.INVISIBLE
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             _taskId?.let {
                 if (_customerInfo != null) {
                     val request = mDetailRVAdapter.getSelectPromotions()
@@ -174,12 +173,8 @@ class DetailCustomerFragment :
                 }
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        rv_page.apply {
+        binding.rvPage.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mDetailRVAdapter
         }
@@ -188,10 +183,10 @@ class DetailCustomerFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             mDetailRVAdapter.addData(
                                 mImages = it.first?.attachments?.map {
@@ -211,7 +206,7 @@ class DetailCustomerFragment :
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -221,10 +216,10 @@ class DetailCustomerFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             requireContext().showMessageDialog(message = it.message) {
                                 findNavController().navigateUp()
@@ -232,7 +227,7 @@ class DetailCustomerFragment :
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -242,17 +237,17 @@ class DetailCustomerFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             _products.clear()
                             _products.addAll(it)
                         }
                     }
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }

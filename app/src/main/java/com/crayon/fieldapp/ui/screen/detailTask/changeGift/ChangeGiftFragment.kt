@@ -2,7 +2,6 @@ package com.crayon.fieldapp.ui.screen.detailTask.changeGift
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
@@ -18,7 +17,6 @@ import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.formatStartEndFullDate
 import com.crayon.fieldapp.utils.setSingleClick
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_change_gift.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ChangeGiftFragment :
@@ -64,32 +62,32 @@ class ChangeGiftFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        rl_empty.visibility = View.GONE
-        rv_customer.visibility = View.VISIBLE
+        binding.rlEmpty.visibility = View.GONE
+        binding.rvCustomer.visibility = View.VISIBLE
 
         jobResponse?.let {
             it.project?.let {
-                txt_project_name?.text = it.name.toString()
+                binding.txtProjectName.text = it.name.toString()
             }
             it.store?.let {
-                txt_address?.text = it.address.toString()
+                binding.txtAddress.text = it.address.toString()
             }
 
             if (it.startTime != null && it.endTime != null) {
-                txt_time?.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
+                binding.txtTime.text = formatStartEndFullDate(it.startTime!!, it.endTime!!)
             }
             it.status?.let {
                 if (it.equals("Processing")) {
-                    txt_staus?.text = "Đang chạy"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đang chạy"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorAccent,
                             null
                         )
                     )
                 } else {
-                    txt_staus?.text = "Đã đóng"
-                    txt_staus?.setTextColor(
+                    binding.txtStaus.text = "Đã đóng"
+                    binding.txtStaus.setTextColor(
                         requireContext().resources.getColor(
                             R.color.colorGray,
                             null
@@ -99,11 +97,11 @@ class ChangeGiftFragment :
             }
         }
 
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        btn_add_customer?.setSingleClick {
+        binding.btnAddCustomer.setSingleClick {
             jobResponse?.store?.let { store ->
                 if (viewModel.verifyLocation(store)) {
                     val isVerifyOtp = jobResponse?.project?.isVerifyOtp ?: false
@@ -132,7 +130,7 @@ class ChangeGiftFragment :
             }
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             PopupMenu.showPopupMenuDashboard(requireView(), object : MenuCallback {
                 override fun onImport() {
                     findNavController().navigate(
@@ -156,10 +154,6 @@ class ChangeGiftFragment :
 
             })
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
         findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<Boolean>("isNew")
             ?.observe(viewLifecycleOwner, Observer { isNew ->
@@ -170,7 +164,7 @@ class ChangeGiftFragment :
                 }
             })
 
-        rv_customer.apply {
+        binding.rvCustomer.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mCustomerAdapter
         }
@@ -179,21 +173,22 @@ class ChangeGiftFragment :
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
 
                             if (it.customerBills.size == 0) {
-                                txt_num_customer?.text = "0 khách hàng"
-                                rl_empty.visibility = View.VISIBLE
-                                rv_customer.visibility = View.GONE
+                                binding.txtNumCustomer.text = "0 khách hàng"
+                                binding.rlEmpty.visibility = View.VISIBLE
+                                binding.rvCustomer.visibility = View.GONE
                             } else {
-                                txt_num_customer?.text =
+                                binding.txtNumCustomer.text =
                                     it.customerBills.size.toString() + " khách hàng"
-                                rl_empty.visibility = View.GONE
-                                rv_customer.visibility = View.VISIBLE
+                                binding.rlEmpty.visibility = View.GONE
+                                binding.rvCustomer.visibility = View.VISIBLE
                                 mCustomerAdapter.addAll(it.customerBills.map {
                                     CustomerResponse(
                                         id = it.customer!!.id.toString(),
@@ -207,8 +202,9 @@ class ChangeGiftFragment :
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }

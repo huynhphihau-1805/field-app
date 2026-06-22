@@ -11,7 +11,6 @@ import com.crayon.fieldapp.databinding.FragmentListStoreBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.StoreAdapter
 import com.crayon.fieldapp.utils.Status
-import kotlinx.android.synthetic.main.fragment_list_store.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListStoreFragment : BaseFragment<FragmentListStoreBinding, ListStoreViewModel>() {
@@ -34,7 +33,7 @@ class ListStoreFragment : BaseFragment<FragmentListStoreBinding, ListStoreViewMo
             itemClickListener = { toStoreDetail(it.id.toString()) }
         )
 
-        rv_store.apply {
+        binding.rvStore.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
@@ -43,16 +42,18 @@ class ListStoreFragment : BaseFragment<FragmentListStoreBinding, ListStoreViewMo
             stores.observe(viewLifecycleOwner, Observer {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             adapter.submitList(it)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             })

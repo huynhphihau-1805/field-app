@@ -13,17 +13,13 @@ import com.crayon.fieldapp.data.remote.response.GiftResponse
 import com.crayon.fieldapp.databinding.FragmentExportGiftBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.screen.detailTask.changeGift.export.adapter.ExportGiftAdapter
-import com.crayon.fieldapp.ui.screen.detailTask.changeGift.export.dialog.EditRemainGiftDialog
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.Utils
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showMessageDialog
 import com.example.moviedb.utils.getQueryTextChangeStateFlow
-import kotlinx.android.synthetic.main.fragment_contact.imb_ic_back
-import kotlinx.android.synthetic.main.fragment_export_gift.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -41,8 +37,8 @@ class ExportGiftFragment : BaseFragment<FragmentExportGiftBinding, ExportGiftVie
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _projectId = requireArguments()?.getString("projectId")
-        _taskId = requireArguments()?.getString("taskId")
+        _projectId = requireArguments().getString("projectId")
+        _taskId = requireArguments().getString("taskId")
 
         mGiftAdapter =
             ExportGiftAdapter(arrayListOf(), requireContext(), onItemListener = { mGift ->
@@ -57,13 +53,14 @@ class ExportGiftFragment : BaseFragment<FragmentExportGiftBinding, ExportGiftVie
         }
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val gifts = mGiftAdapter.getSelectItems()
             if (gifts.size == 0) {
                 requireContext().showMessageDialog(message = "Vui lòng chọn quà tặng")
@@ -73,28 +70,27 @@ class ExportGiftFragment : BaseFragment<FragmentExportGiftBinding, ExportGiftVie
                 viewModel.updateGiftOut(taskId = it, gift = gifts)
             }
         }
-    }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         setUpSearchStateFlow()
 
         viewModel.updateGift.observe(viewLifecycleOwner, Observer {
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             requireContext().showMessageDialog(message = it) {
                                 findNavController().navigateUp()
                             }
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
@@ -104,37 +100,41 @@ class ExportGiftFragment : BaseFragment<FragmentExportGiftBinding, ExportGiftVie
             it.getContentIfNotHandled()?.let {
                 when (it.status) {
                     Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
+                        binding.pbLoading.visibility = View.VISIBLE
                     }
+
                     Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                         it.data?.let {
                             mGiftAdapter.addAll(it as ArrayList<GiftResponse>)
                         }
                     }
+
                     Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+                        binding.pbLoading.visibility = View.GONE
                     }
                 }
             }
         })
-        rv_product.apply {
+        binding.rvProduct.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = mGiftAdapter
         }
     }
 
     private fun setUpSearchStateFlow() {
-        val iconSearchClose = sv_product?.findViewById<ImageView>(R.id.search_close_btn)
+        val iconSearchClose =
+            binding.svProduct.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn)
         iconSearchClose?.setSingleClick {
-            val et = sv_product?.findViewById(com.crayon.fieldapp.R.id.search_src_text) as EditText
+            val et =
+                binding.svProduct.findViewById(androidx.appcompat.R.id.search_src_text) as EditText
             et.setText("")
-            sv_product?.setQuery("", false)
+            binding.svProduct.setQuery("", false)
             mGiftAdapter.refresh()
             Utils.hideKeyboard(requireActivity())
         }
 
-        sv_product?.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
+        binding.svProduct.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 mGiftAdapter.getFilter().filter(query.toString())
@@ -148,7 +148,7 @@ class ExportGiftFragment : BaseFragment<FragmentExportGiftBinding, ExportGiftVie
         })
 
         GlobalScope.launch {
-            sv_product?.let {
+            binding.svProduct.let {
                 it.getQueryTextChangeStateFlow()
                     .debounce(1000)
                     .filter { query ->

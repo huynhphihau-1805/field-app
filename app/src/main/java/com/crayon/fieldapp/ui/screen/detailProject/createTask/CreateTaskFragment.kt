@@ -12,7 +12,6 @@ import com.crayon.fieldapp.ui.screen.detailProject.createTask.adapter.TaskTypeSP
 import com.crayon.fieldapp.utils.Status
 import com.crayon.fieldapp.utils.setSingleClick
 import com.crayon.fieldapp.utils.showDialog
-import kotlinx.android.synthetic.main.fragment_create_task.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CreateTaskFragment : BaseFragment<FragmentCreateTaskBinding, CreateTaskViewModel>() {
@@ -41,13 +40,13 @@ class CreateTaskFragment : BaseFragment<FragmentCreateTaskBinding, CreateTaskVie
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        imb_ic_back?.setSingleClick {
+        binding.imbIcBack.setSingleClick {
             findNavController().navigateUp()
         }
 
-        sp_type.adapter = taskTypeAdapter
+        binding.spType.adapter = taskTypeAdapter
 
-        imb_ic_filter?.setSingleClick {
+        binding.imbIcFilter.setSingleClick {
             val form = CreateTaskForm(
                 agency = agencyId,
                 project = projectId,
@@ -56,7 +55,7 @@ class CreateTaskFragment : BaseFragment<FragmentCreateTaskBinding, CreateTaskVie
                 pic = picId,
                 name = "Name",
                 description = "description",
-                type = taskTypeAdapter.getItem(sp_type.selectedItemPosition).value.toString()
+                type = taskTypeAdapter.getItem(binding.spType.selectedItemPosition).value.toString()
             )
             form.validate().also { result ->
                 if (result.first) {
@@ -67,17 +66,13 @@ class CreateTaskFragment : BaseFragment<FragmentCreateTaskBinding, CreateTaskVie
             }
         }
 
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
         viewModel.apply {
             createTask.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
                 when (it.status) {
                     Status.LOADING -> {
                         showLoading()
                     }
+
                     Status.SUCCESS -> {
                         hideLoading()
                         requireContext().showDialog(
@@ -88,13 +83,13 @@ class CreateTaskFragment : BaseFragment<FragmentCreateTaskBinding, CreateTaskVie
                             }
                         )
                     }
+
                     Status.ERROR -> {
                         hideLoading()
                     }
                 }
             })
         }
-
 
     }
 }

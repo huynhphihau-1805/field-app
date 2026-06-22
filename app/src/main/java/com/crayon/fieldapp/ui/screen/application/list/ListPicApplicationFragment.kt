@@ -2,14 +2,12 @@ package com.crayon.fieldapp.ui.screen.application.list
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.crayon.fieldapp.R
 import com.crayon.fieldapp.databinding.FragmentListPicApplicationsBinding
 import com.crayon.fieldapp.ui.base.BaseFragment
 import com.crayon.fieldapp.ui.base.adapter.ApplicationAdapter
 import com.crayon.fieldapp.utils.Status
-import kotlinx.android.synthetic.main.fragment_list_pic_applications.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class ListPicApplicationFragment :
@@ -17,6 +15,7 @@ class ListPicApplicationFragment :
 
     override val layoutId: Int
         get() = R.layout.fragment_list_pic_applications
+
     lateinit var agencyId: String
     lateinit var status: String
 
@@ -24,40 +23,41 @@ class ListPicApplicationFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        agencyId = requireArguments().get("agencyId").toString()
-        status = requireArguments().get("status").toString()
+        agencyId = requireArguments().getString("agencyId", "")
+        status = requireArguments().getString("status", "")
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+        val adapter = ApplicationAdapter()
 
-        val adapter = ApplicationAdapter(
-        )
-
-        rv_application.apply {
+        binding.rvApplication.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
 
-        viewModel.apply {
-            applications.observe(viewLifecycleOwner, Observer {
-                when (it.status) {
-                    Status.LOADING -> {
-                        pb_loading.visibility = View.VISIBLE
-                    }
-                    Status.SUCCESS -> {
-                        pb_loading.visibility = View.GONE
-                        it.data?.let {
-                            adapter.submitList(it)
-                        }
-                    }
-                    Status.ERROR -> {
-                        pb_loading.visibility = View.GONE
+        viewModel.applications.observe(viewLifecycleOwner) { resource ->
+            when (resource.status) {
+                Status.LOADING -> {
+                    binding.pbLoading.visibility = View.VISIBLE
+                }
+
+                Status.SUCCESS -> {
+                    binding.pbLoading.visibility = View.GONE
+                    resource.data?.let { data ->
+                        adapter.submitList(data)
                     }
                 }
-            })
-            getMyApplications(status)
+
+                Status.ERROR -> {
+                    binding.pbLoading.visibility = View.GONE
+                }
+            }
+        }
+
+        if (status.isNotEmpty()) {
+            viewModel.getMyApplications(status)
         }
     }
 }
